@@ -1,0 +1,2 @@
+[17-Oct-2019 07:22:33 UTC] PHP Fatal error:  Allowed memory size of 134217728 bytes exhausted (tried to allocate 576410 bytes) in /home/point1ph/public_html/imilky_hq/application/libraries/make.php on line 313
+[17-Oct-2019 15:28:23 Asia/Manila] PHP Fatal error:  Allowed memory size of 134217728 bytes exhausted (tried to allocate 52286 bytes) in /home/point1ph/public_html/imilky_hq/system/database/drivers/mysql/mysql_driver.php on line 619

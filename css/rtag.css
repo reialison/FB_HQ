@@ -1,0 +1,56 @@
+.rtag{
+	position: absolute;
+	cursor: crosshair;
+	top: 0px;
+	z-index: 200;
+}
+
+.rtag .marker{
+	position: absolute;
+	background: url(img/markerRG2.png) left top no-repeat;
+	width: 50px; 
+	height: 50px;
+	margin-left: -15px; 
+	margin-top: -15px; 
+	z-index: 100; 
+	display: block; 
+	cursor: pointer;
+}
+/*.rtag .marker:hover, .rtag .marker.active {
+	background-position: left bottom;
+	z-index: 2000;
+}*/
+.rtag .marker-green{
+  position: absolute;
+  background: url(img/markerRG2.png) left top no-repeat;
+  width: 50px; 
+  height: 50px;
+  margin-left: -15px; 
+  margin-top: -15px; 
+  z-index: 100; 
+  display: block; 
+  cursor: pointer;
+}
+.rtag .marker-red{
+  position: absolute;
+  background: url(img/markerRG2.png) left bottom no-repeat;
+  background-position: 0px ; 
+  width: 50px; 
+  height: 50px;
+  margin-left: -15px; 
+  margin-top: -15px; 
+  z-index: 2000;
+  display: block; 
+  cursor: pointer;
+}
+.rtag .marker-orange{
+  position: absolute;
+  background: url(img/markerRG2.png) left bottom no-repeat;
+  width: 50px; 
+  height: 50px;
+  margin-left: -15px; 
+  margin-top: -15px; 
+  z-index: 2000;
+  display: block; 
+  cursor: pointer;
+}

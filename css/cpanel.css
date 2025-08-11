@@ -1,0 +1,139 @@
+#cpanel{
+  position: fixed;
+  /* center the div */
+  right: 0;
+  left: 0;
+  margin-right: auto;
+  margin-left: auto;
+  /* give it dimensions */
+  min-height: 100%;
+  max-height: 100%;
+  width: 100%;
+  overflow: auto;
+}
+#cpanel div{
+  margin: 0;
+  padding: 0;
+}
+#cpanel #top-btns-con{
+  height: 50px;
+  overflow: hidden;
+}
+#cpanel #top-btns-con .btn-block{
+  height: 50px;
+  border-radius: 0px;
+  margin: 0 !important;
+}
+#cpanel #top-btns-con #top-datetime{
+  height: 50px;
+  width: 100%;
+  padding: 3px;
+  background-color: #333;
+  -webkit-box-shadow:inset  0 0 8px rgba(0,0,0, .75);
+  -moz-box-shadow:inset  0 0 8px rgba(0,0,0, .75);
+  box-shadow:inset  0 0 8px rgba(0,0,0, .75);
+  color: #fff;
+}
+#cpanel #profile-con{
+  height: 75px;
+  background-color: #fff;
+  overflow: hidden;
+}
+#cpanel #profile-con #user-img{
+  height: 75px;
+  width: 100%;
+}
+#cpanel #profile-con #user-detail{
+  font-size:14px;
+  margin: 0px;
+  padding: 0;
+  border-bottom: 1px solid #ddd;
+  height: 35px;
+}
+#cpanel #profile-con #user-con h3{
+  margin:5px;
+  font-size:14px;
+}
+/* BOXES */
+  #cpanel .cpanel-center-box{
+    margin:3px;
+    padding:8px;
+    /*padding-top: 20px;*/
+    padding-bottom: 20px;
+    -webkit-box-shadow:inset  0 0 8px rgba(0,0,0, .75);
+    -moz-box-shadow:inset  0 0 8px rgba(0,0,0, .75);
+    box-shadow:inset  0 0 8px rgba(0,0,0, .75);
+  }  
+  #cpanel .cpanel-side-box{    
+    background-color:#333;
+    margin:3px;
+    padding:8px;
+    /*padding-top: 20px;*/
+    padding-bottom: 20px;
+    -webkit-box-shadow:inset  0 0 8px rgba(0,0,0, .75);
+    -moz-box-shadow:inset  0 0 8px rgba(0,0,0, .75);
+    box-shadow:inset  0 0 8px rgba(0,0,0, .75);
+  }
+  #cpanel .cpanel-side-box .form-group{
+    background-color: #F4EDE0;
+    margin-bottom: 3px;    
+  }
+/* OTHERS */
+  #cpanel button,
+  #cpanel button:visited{
+    vertical-align:middle;
+    text-align:center;
+    font-size:14px;
+    font-weight:bold;
+    height:50px;
+    cursor:pointer;
+    color:#fff;
+    border: none;
+    background:#222;
+    /*display:inline-block;*/
+    /*padding:5px 10px 6px;*/
+    color:#fff;
+    text-decoration:none;
+    /*border-radius:3px;
+    -moz-border-radius:3px;
+    -webkit-border-radius:3px;*/
+    border-radius: 0px;
+    -moz-box-shadow:0 1px 3px rgba(0, 0, 0, 0.5);
+    -webkit-box-shadow:0 1px 3px rgba(0, 0, 0, 0.5);
+    text-shadow:0 -1px 1px rgba(0, 0, 0, 0.1);
+    border-bottom:1px solid rgba(0, 0, 0, 0.25);
+    position:relative; cursor:pointer;
+    box-shadow:0 1px 1px rgba(0, 0, 0, 0.2);
+    white-space: normal;
+  }
+  #cpanel button:hover { background-color:#3B3B3B !important; color:#fff;}
+  #cpanel button:active { top:1px;}
+  #cpanel button.btn-green,
+  #cpanel button.btn-green:visited { background-color:#91bd09 !important;}
+  #cpanel button.btn-green:hover { background-color:#749a02 !important;}
+  #cpanel button.btn-red,
+  #cpanel button.btn-red:visited { background-color:#D12027 !important;}
+  #cpanel button.btn-red:hover { background-color:#B6151C !important;}
+  #cpanel button.btn-silver,
+  #cpanel button.btn-silver:visited { background-color:#eee !important; color:#333 !important;}
+  #cpanel button.btn-silver:hover { background-color:#ddd !important;}
+  #cpanel button.btn-white,
+  #cpanel button.btn-white:visited { background-color:#fff !important; color:#333 !important;}
+  #cpanel button.btn-white:hover { background-color:#f1f1f1 !important;}
+  #cpanel button.btn-teal,
+  #cpanel button.btn-teal:visited { background-color:#2daebf !important;}
+  #cpanel button.btn-teal:hover { background-color:#007d9a !important;}
+  #cpanel button.btn-orange,
+  #cpanel button.btn-orange:visited { background-color:#ff5c00 !important;}
+  #cpanel button.btn-orange:hover { background-color:#d45500 !important;}
+  #cpanel button.btn-blue,
+  #cpanel button.btn-blue:visited { background-color:#20877F !important;}
+  #cpanel button.btn-blue:hover { background-color:#015D56 !important;}
+  #cpanel button.btn-red-gray,
+  #cpanel button.btn-red-gray:visited { background-color:#69574e !important;}
+  #cpanel button.btn-red-gray:hover { background-color:#55453e !important;}
+  #cpanel button.double{
+    height: 65px;
+    font-size: 14px;
+  }
+
