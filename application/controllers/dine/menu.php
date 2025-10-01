@@ -15,7 +15,7 @@ class Menu extends CI_Controller {
         // $menus = $this->menu_model->get_menus();
         $th = array('ID','Name','Description','Category','Cost','Register Date','Inactive','');
         $data['code'] = create_rtable('menus','menu_id','menus-tbl',$th,'menu/search_menus_form',true,'list','menu/export_form');
-// echo $data['code'];die();
+        // echo $data['code'];die();
         // $data['code'] = menuListPage($menus);
         $data['add_css'] = 'css/wowdash.css';
         $data['load_js'] = 'dine/menu.php';
@@ -60,18 +60,20 @@ class Menu extends CI_Controller {
             $args = array();
             $args['menus.menu_id'] = $id;
         }
+           // Add condition to only show menu_id > 1000
+        $args['menus.menu_id >'] = array('use'=>'where','val'=>1000);
         $join["menu_categories"] = array('content'=>"menus.menu_cat_id = menu_categories.menu_cat_id");
         $join["menu_subcategories"] = array('content'=>"menus.menu_sub_cat_id = menu_subcategories.menu_sub_cat_id");
         $count = $this->site_model->get_tbl('menus',$args,array(),$join,true,'menus.*,menu_categories.menu_cat_name,menu_subcategories.menu_sub_cat_name',null,null,true);
         $page = paginate('menu/get_menus',$count,$total_rows,$pagi);
         if(!$resultOnly){
-            $groupm = 'menus.menu_id';
+            $groupm = 'menus.menu_id,menus.cost';
             $items = $this->site_model->get_tbl('menus',$args,array(),$join,true,'menus.*,menu_categories.menu_cat_name,menu_subcategories.menu_sub_cat_name',$groupm,$page['limit']);
             // echo $this->db->last_query();die();
             // $l_q = $this->db->last_query();
         }
         else{
-            $groupm = 'menus.menu_id';
+            $groupm = 'menus.menu_id,menus.cost';
             $items = $this->site_model->get_tbl('menus',$args,array(),$join,true,'menus.*,menu_categories.menu_cat_name,menu_subcategories.menu_sub_cat_name',$groupm);
             return $items;
         }

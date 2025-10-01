@@ -2266,4 +2266,19 @@ class Make{
 		// 	}
 		// 	if($this->returnitize($params)) return $str; else $this->code .= $str;
 	    }
+		function foodTypeDrop($label=null,$nameID=null,$value=null,$placeholder=null,$params=array()){
+	    	$CI =& get_instance();
+	 		$CI->load->model('site/site_model');
+	    	$str = "";
+				$selectParams = $params;
+				if(!isset($selectParams['return']))
+					$selectParams['return'] = true;
+
+				$opts  = array();
+				// $opts[$placeholder] = NULL;
+				$opts['Restaurant'] = array('value'=>'0');
+				$opts['Bakeshop'] = array('value'=>'1');
+				$str .= $this->select($label,$nameID,$opts,$value,$selectParams);
+			if($this->returnitize($params)) return $str; else $this->code .= $str;
+	    }
 }

@@ -827,27 +827,28 @@ $(document).ready(function(){
 			}
 			else{
 				// $.rProgressBar();
-				goTo('prints/excel_menu_item_sales?'+formData);
+				// goTo('prints/excel_menu_item_sales?'+formData);
+				goTo('prints/menuitem_sales_rep_gen_excel?'+formData);
 			}
 
 			return false;
 		});
-		// $('#tcpdf-btn').click(function(){
-		// 	var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+		$('#tcpdf-btn').click(function(){
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
 			
-		// 	if($('#calendar_range').val() == ""){
-		// 		rMsg('Enter Date Range','error');
-		// 	}
-		// 	if($('#branch_id').val() == ""){
-		// 		rMsg('Please Select Branch','error');
-		// 	}
-		// 	else{
-		// 		$.rProgressBar();				
-		// 		window.open(baseUrl+"prints/menuitem_sales_rep_pdf?"+formData, "popupWindow", "width=600,height=600,scrollbars=yes");
-		// 	}
+			if($('#calendar_range').val() == ""){
+				rMsg('Enter Date Range','error');
+			}
+			if($('#branch_id').val() == ""){
+				rMsg('Please Select Branch','error');
+			}
+			else{
+				$.rProgressBar();				
+				window.open(baseUrl+"prints/menuitem_sales_rep_pdf?"+formData, "popupWindow", "width=600,height=600,scrollbars=yes");
+			}
 
-		// 	return false;
-		// });
+			return false;
+		});
 		function view_list(data){
 			$('#print-div').html("");
 			$('#print-div').html(data.code);
@@ -987,6 +988,203 @@ $(document).ready(function(){
  				$(this).daterangepicker({separator: ' to '});
  			}
  		});
+ 	<?php elseif($use_js == 'mgtSalesJs'): ?>
+		$('#print-box').hide();
+		$(".timepicker").timepicker({
+		    showInputs: false
+		});
+		$('#excel-btn').click(function(){
+			// var values = res.tbl_vals;
+			// var range = res.dates;
+
+			// var report_type = $("#report_type").val();
+			// var pdf = "sales_rep_excel";
+
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+			excel = "mgt_rep_gen_excel";
+			// 				+'&menu_cat_id='+$("#menu_cat_id").val();
+			// if(report_type == 1)
+			// {
+			// }
+			// else if(report_type == 2)
+			// {
+			// 	excel = "menu_sales_rep_excel";
+			// }
+			// else if(report_type == 3)
+			// {
+			// 	excel = "hourly_sales_rep_excel";
+			// 	var formData = 'calendar_range='+$('#calendar_range').val()
+			// 				+'&menu_cat_id=0';
+			// }
+
+
+			// var formData = 'calendar_range='+$('#calendar_range').val();
+			if($('#calendar_range').val() == ""){
+				rMsg('Enter Date Range','error');
+			}
+			else{
+				$.rProgressBar();
+				goTo('prints/'+excel+'?'+formData);
+			}
+
+			return false;
+		});
+		// $("#report_type").change(function(){
+		// 	if($(this).val() == 3){
+		// 		$("#category-div").hide();
+		// 	}else{
+		// 		$("#category-div").show();
+		// 	}
+		// });
+		$('#gen-rep').click(function(){
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+			if($('#calendar_range').val() == ""){
+				rMsg('Enter Date Range','error');
+			}
+			else{
+				var btn = $(this);
+				btn.goLoad();
+				$.rProgressBar();
+				// var report_type = $("#report_type").val();
+				// var page = "sales_rep_gen";
+				// if(report_type == 1)
+				// {
+				// 	page = "sales_rep_gen";
+				// }
+				// else if(report_type == 2)
+				// {
+				// 	page = "menu_sales_rep_gen";
+				// }
+				// else if(report_type == 3)
+				// {
+				// 	page = "hourly_sales_rep_gen";
+				// 	var formData = 'calendar_range='+$('#calendar_range').val()
+				// 			+'&menu_cat_id=0';
+				// }
+				// console.log(page);
+
+				$.post(baseUrl+'prints/mgt_rep_gen',formData,function(data){
+					// alert(data);
+					// console.log(data);
+					$.rProgressBarEnd({
+						onComplete : function(){
+							btn.goLoad({load:false});
+							var res = data;
+							view_list(res);
+							// console.log(data);
+							$('#view-list').click(function(){
+								view_list(res); 
+								return false;
+							});
+							$('#view-grid').click(function(){
+								view_grid(res);
+								return false;
+							});
+							$('#pdf-btn').click(function(){
+								$('#print-div').print();
+								return false;
+							});
+						 }
+					});
+				// });
+				},'json');				
+			}
+			return false;
+		});
+		$('#tcpdf-btn').click(function(){			
+			// var report_type = $("#report_type").val();
+			// var pdf = "sales_rep_gen";
+
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+			// if(report_type == 1)
+			// {
+			// 	pdf = "sales_rep_pdf";
+			// }
+			// else if(report_type == 2)
+			// {
+			// 	pdf = "menu_sales_rep_pdf";
+			// }
+			// else if(report_type == 3)
+			// {
+			// 	pdf = "hourly_sales_rep_pdf";
+			// 	var formData = 'calendar_range='+$('#calendar_range').val()
+			// 				+'&menu_cat_id=0';
+			// }
+			
+			if($('#calendar_range').val() == ""){
+				rMsg('Enter Date Range','error');
+			}
+			else{
+				$.rProgressBar();				
+				window.open(baseUrl+"prints/menuitem_sales_rep_pdf?"+formData, "popupWindow", "width=600,height=600,scrollbars=yes");
+			}
+
+			return false;
+		});
+		function view_list(data){
+			$('#print-div').html("");
+			$('#print-div').html(data.code);
+			$('#print-div').parent().parent().parent().parent().show();
+			$('.listyle-btns').removeClass('active');
+			$('#view-list').addClass('active');
+			$('#print-box').show();
+		}
+		function view_grid(data){
+			$('#print-div').html("");
+			var bar = new Morris.Bar({
+                element: 'print-div',
+                resize: true,
+                data: data.tbl_vals,
+                xkey: 'name',
+                ykeys: ['amount', 'qty'],
+                labels: ['Amount', 'Qty'],
+                gridTextSize: 8,
+
+                hideHover: 'auto'
+            });
+            $('#print-div').parent().parent().parent().parent().show();
+            $('.listyle-btns').removeClass('active');
+			$('#view-grid').addClass('active');
+			$('#print-box').show();
+		}
+
+
+		$('.daterangepicker').each(function(index){
+ 			if ($(this).hasClass('datetimepicker')) {
+ 				$(this).daterangepicker({separator: ' to ', timePicker: true, timePickerIncrement:15, format: 'YYYY/MM/DD h:mm A'});
+ 			} else {
+ 				$(this).daterangepicker({separator: ' to '});
+ 			}
+ 		});
+ 		$("#search").keyup(function(e){
+ 			e.preventDefault();
+ 			if($("#main-tbl").length)
+ 			{
+ 				myFunction(); 			 				
+ 			}
+ 		}); 		
+ 		function myFunction() {
+		  // Declare variables 
+		  var input, filter, table, tr, td, i;
+		  input = document.getElementById("search");
+		  filter = input.value.toUpperCase();
+		  table = document.getElementById("main-tbl");
+		  tr = table.getElementsByTagName("tr");
+
+		  // Loop through all table rows, and hide those who don't match the search query
+		  for (i = 0; i < tr.length; i++) {
+		    td = tr[i].getElementsByTagName("td")[0];
+		    if (td) {
+		      if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+		        tr[i].style.display = "";
+		      } else {
+		        tr[i].style.display = "none";
+		      }
+		    } 
+		  }
+		}
+
+
 
 	<?php endif; ?>
 });

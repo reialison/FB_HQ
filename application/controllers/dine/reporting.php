@@ -14254,7 +14254,7 @@ class Reporting extends Prints {
     
         // echo "asdf";die(); 
         $trans_ret = $this->gift_cards_model->get_gift_cards_rep_retail($from, $to,  $branch_id,$brand);
-        // echo $this->db->last_query(); die();             
+        echo $this->db->last_query(); die();             
         // echo "<pre>", print_r($trans_mod), "</pre>"; die();
         $trans_count = count($trans_ret);
         // $trans_count_ret = count($trans_ret);
@@ -18814,6 +18814,1976 @@ class Reporting extends Prints {
         $objWriter = PHPExcel_IOFactory::createWriter($this->excel, 'Excel2007');
         $objWriter->save('php://output');
         // echo $printss;
+    }
+    public function merchandise_report()
+    {
+        $data = $this->syter->spawn('sales_rep');        
+        $data['page_title'] = fa('fa-money')." Merchandise Returns Report";
+        $data['code'] = BadOrderRep();
+        $data['add_css'] = array('css/wowdash.css','css/morris/morris.css','css/datepicker/datepicker.css','css/daterangepicker/daterangepicker-bs3.css');
+        $data['add_js'] = array('js/plugins/morris/morris.min.js','js/plugins/datepicker/bootstrap-datepicker.js','js/plugins/daterangepicker/daterangepicker.js');
+        $data['page_no_padding'] = false;
+        $data['sideBarHide'] = false;
+        $data['load_js'] = 'dine/reporting';
+        $data['use_js'] = 'BadOrderRepJS';
+        $this->load->view('page',$data);
+    }
+    public function bad_order_report_gen()
+    {
+        $this->load->model('dine/setup_model');
+        // $this->load->database('main', TRUE);
+        $this->load->model("dine/menu_model");
+        $this->load->model("dine/reports_model");
+        // echo 'das';die();
+        $branch_code = $this->input->post("branch_id"); 
+        $setup = $this->setup_model->get_details($branch_code);
+        // echo "<pre>", print_r($setup), "</pre>";die();
+        $set = $setup[0];
+        start_load(0);
+        // $menu_cat_id = $this->input->post("menu_cat_id"); 
+        $terminal_id = null;
+        // if(CONSOLIDATOR){
+        //     $terminal_id = $this->input->post("terminal_id");
+        // }       
+        // $brand = $this->input->post("brand"); 
+        $daterange = $this->input->post("calendar_range");        
+        $dates = explode(" to ",$daterange);
+        
+        // $this->menu_model->db = $this->load->database('main', TRUE);
+        $from = date2SqlDateTime($daterange." 00:00:01");        
+        $to = date2SqlDateTime($daterange." 23:59:59");
+        // $trans = $this->reports_model->get_trans_cust_info_rep($from, $to,$fname,$lname,$member_type_id, "", $terminal_id);  
+        $trans = $this->reports_model->get_bad_order_rep($from, $to, $terminal_id,$branch_code);  
+        // echo $this->reports_model->db->last_query();  die();            
+        $trans_ret = array();
+        // $trans_ret = $this->menu_model->get_cat_sales_rep_retail($from, $to, "");  
+        $trans_count = count($trans);
+        $trans_count_ret = count($trans_ret);
+        $counter = 0;
+
+        $this->make->sDiv();
+            $this->make->sTable(array("id"=>"main-tbl", 'class'=>'table reportTBL sortable'));
+                $this->make->sTableHead();
+                    $this->make->sRow();
+                        $this->make->th('Date');
+                        $this->make->th('Reference');
+                        $this->make->th('SKU');
+                        $this->make->th('Menu Name');
+                        $this->make->th('SRP');
+                        $this->make->th('LO');
+                        $this->make->th('BM');
+                        $this->make->th('Total');
+                        $this->make->th('Remarks');
+                        // $this->make->th('');
+                    $this->make->eRow();
+                $this->make->eTableHead();
+                $this->make->sTableBody();
+                    $tot_qty1 = 0;
+                    $tot_qty2 = 0;
+                    $tot_vat_sales = 0;
+                    $tot_vat = 0;
+                    $tot_gross = 0;
+                    $tot_sales_prcnt = 0;
+                    $tot_cost = 0;
+                    $tot_srp = 0;
+                    $tot_margin = 0;
+                    $tot_cost_prcnt = 0;
+                    $t_gross = 0;
+                    $all_total = 0;
+                    $gtotal = 0;
+                    $g_tot = 0;
+                    foreach ($trans as $v) {
+                        // $tot_gross += $v->gross;
+                        // $tot_cost += $v->cost;
+                    }
+                    $tgc_total = 0;
+                    $tgc_amount = 0;
+
+                    $gtot_all1 = 0;
+                    $gtot_all2 = 0;
+                    $tot_all1 = 0;
+                    $tot_all2 = 0;
+                    foreach ($trans as $res) {
+                    $qty1 = $qty2 = 0;
+                        
+                        $this->make->sRow();
+                            $this->make->td(date('m-d-Y',strtotime($res->reg_date)));
+                            $this->make->td($res->trans_ref);
+                            $this->make->td($res->menu_code);
+                            $this->make->td($res->menu_name);
+                            $this->make->td(num($res->srp,2), array("style"=>"text-align:right"));
+                            if($res->merch_type == 1){
+                                $this->make->td(abs($res->qty), array("style"=>"text-align:right"));
+                                $this->make->td(0, array("style"=>"text-align:right"));
+                                $tot_qty1 += $res->qty;
+                                $qty1 = $res->qty;
+                            }else{
+                                $this->make->td(0, array("style"=>"text-align:right"));
+                                $this->make->td(abs($res->qty), array("style"=>"text-align:right"));
+                                $tot_qty2 += $res->qty;
+                                $qty2 = $res->qty;
+                            }
+                            // $this->make->td(num($res->cost,2), array("style"=>"text-align:right"));
+                            $all_total = $res->srp *($qty1 + $qty2);
+                            $tot_all1 = $res->srp * $qty1;
+                            $tot_all2 = $res->srp * $qty2;
+                            $gtot_all1 += $tot_all1;
+                            $gtot_all2 += $tot_all2;
+                            $this->make->td(abs(num($all_total,2)), array("style"=>"text-align:right"));
+                            $this->make->td($res->memo);
+                        $tot_cost += $res->cost;
+                        $tot_srp += $res->srp;
+                        $g_tot += $all_total;
+                        $this->make->eRow();
+                        $counter++;
+                        $progress = ($counter / $trans_count) * 100;
+                        update_load(num($progress));
+
+                    } 
+                    $this->make->sRow();
+                        // $this->make->td($res->trans_ref);
+                        $this->make->td('TOTAL',array('colspan'=>'4')); 
+                        $this->make->td(num($tot_srp,2), array("style"=>"text-align:right"));
+                        $this->make->td(abs($tot_qty1), array("style"=>"text-align:right"));
+                        $this->make->td(abs($tot_qty2), array("style"=>"text-align:right"));
+                        $this->make->td(abs($g_tot), array("style"=>"text-align:right"));
+                        $this->make->td('',array()); 
+                    $this->make->eRow();                                 
+                $this->make->eTableBody();
+            $this->make->eTable();
+
+            $this->make->sTable(array("id"=>"main-tbl", 'class'=>'table reportTBL sortable','style'=>'width:20%'));
+                $this->make->sTableHead();
+                    $this->make->sRow();
+                        $this->make->td('Total LO',array('colspan'=>'')); 
+                        $this->make->td(num(abs($gtot_all1),2), array("style"=>"text-align:right"));
+                    $this->make->eRow(); 
+                    $this->make->sRow();
+                        $this->make->td('Total BM',array('colspan'=>'')); 
+                        $this->make->td(num(abs($gtot_all2),2), array("style"=>"text-align:right"));
+                    $this->make->eRow();
+                    $this->make->sRow();
+                        $gtotal = $gtot_all1 + $gtot_all2;
+                        $this->make->td('G.Total',array('colspan'=>'')); 
+                        $this->make->td(num(abs($gtotal),2), array("style"=>"text-align:right"));
+                    $this->make->eRow();                                
+                $this->make->eTableBody();
+            $this->make->eTable();
+
+        $this->make->eDiv();
+        update_load(100);
+        $code = $this->make->code();
+        $json['code'] = $code;        
+        $json['tbl_vals'] = $trans;
+        $json['dates'] = $this->input->post('calendar_range');
+        echo json_encode($json);
+    }
+    public function bad_order_report_gen_pdf()
+    {
+        // Include the main TCPDF library (search for installation path).
+        require_once( APPPATH .'third_party/tcpdf.php');
+        $this->load->model("dine/setup_model");
+        date_default_timezone_set('Asia/Manila');
+
+        // create new PDF document
+        $pdf = new TCPDF("L", PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('iPOS');
+        $pdf->SetTitle('Merchandise Returns Report');
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+        // echo "<pre>", print_r($_GET), "</pre>";die();
+        $branch_code = $_GET['branch_id'];
+        // set default header data
+        $setup = $this->setup_model->get_details($branch_code);
+        $set = $setup[0];
+        $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, $set->branch_name, $set->address);
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set some language-dependent strings (optional)
+        if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+            require_once(dirname(__FILE__).'/lang/eng.php');
+            $pdf->setLanguageArray($l);
+        }
+
+        // ---------------------------------------------------------
+        $this->load->model('dine/setup_model');
+        // $this->load->database('main', TRUE);
+        // $this->menu_model->db = $this->load->database('main', TRUE);
+        $this->load->model("dine/menu_model");
+        $this->load->model("dine/reports_model");
+        start_load(0);
+
+        // set font
+        $pdf->SetFont('helvetica', 'B', 11);
+
+        // add a page
+        $pdf->AddPage();
+        
+        // $member_type_id = $_GET['member_type_id'];
+        $terminal_id = null;
+        // if(CONSOLIDATOR){
+        //     if($_GET['terminal_id']){
+        //         $terminal_id = $_GET['terminal_id'];
+        
+        //     }
+        // }
+        $name = $fname = $lname = "";       
+        // $member_name = $_GET['member_name']; 
+        // if($member_name){
+        // $name = explode(" ",$member_name);
+        //     $fname = $name[0];
+        //     $lname = $name[1];
+        // }            
+        $daterange = $_GET['calendar_range'];        
+        $dates = explode(" to ",$daterange);
+        $from = date2SqlDateTime($daterange." 00:00:01");        
+        $to = date2SqlDateTime($daterange." 23:59:59");
+        // $from = date2SqlDateTime($dates[0]. " ".$set->store_open);        
+        // $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
+        // $from = date2SqlDateTime($dates[0]." 00:00:01");        
+        // $to = date2SqlDateTime($dates[1]." 23:59:59");
+        // $trans = $this->reports_model->get_trans_cust_info_rep($from, $to,$fname,$lname, $member_type_id,"",$terminal_id);
+        $trans = $this->reports_model->get_bad_order_rep($from, $to, $terminal_id,$branch_code); 
+        // $trans_ret = $this->menu_model->get_cat_sales_rep_retail($from, $to, "");
+        $trans_ret = array();
+        // echo $this->db->last_query();die();     
+        
+
+        $pdf->Write(0, 'Merchandise Returns Report', '', 0, 'L', true, 0, false, false, 0);
+        $pdf->SetLineStyle(array('width' => 0.6, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => 'black'));
+        $pdf->Cell(267, 0, '', 'T', 0, 'C');
+        $pdf->ln(0.9);      
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Write(0, 'Report Period:    ', '', 0, 'L', false, 0, false, false, 0);
+        $pdf->Write(0, $daterange, '', 0, 'L', false, 0, false, false, 0);
+        $pdf->setX(200);
+        $pdf->Write(0, 'Report Generated:    '.(new \DateTime())->format('Y-m-d H:i:s'), '', 0, 'L', true, 0, false, false, 0);
+        // $pdf->Write(0, 'Transaction Time:    ', '', 0, 'L', false, 0, false, false, 0);
+        // $pdf->setX(200);
+        $user = $this->session->userdata('user');
+        $pdf->Write(0, 'Generated by:    '.$user["full_name"], '', 0, 'L', true, 0, false, false, 0);        
+        $fullname = "";   
+        // }
+        $pdf->ln(1);      
+        $pdf->Cell(267, 0, '', 'T', 0, 'C');
+        $pdf->ln();              
+
+        // echo "<pre>", print_r($trans), "</pre>";die();
+
+        // -----------------------------------------------------------------------------
+        // $pdf->SetLineStyle(array('width' => 0.6, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => 'black'));
+        // $pdf->Cell(267, 0, '', 'T', 0, 'C');     
+        // $pdf->ln(1);  
+        $pdf->ln();  
+        $pdf->Cell(25, 0, 'Date', 'B', 0, 'L');        
+        $pdf->Cell(25, 0, 'Reference', 'B', 0, 'L');         
+        $pdf->Cell(15, 0, 'SKU', 'B', 0, 'L');         
+        $pdf->Cell(75, 0, 'Menu Name  ', 'B', 0, 'L');         
+        $pdf->Cell(25, 0, 'Amount', 'B', 0, 'R');     
+        $pdf->Cell(25, 0, 'LO', 'B', 0, 'R');        
+        $pdf->Cell(25, 0, 'BM', 'B', 0, 'R');        
+        $pdf->Cell(25, 0, 'Total', 'B', 0, 'R');        
+        $pdf->Cell(25, 0, 'Remarks  ', 'B', 0, 'L');         
+        $pdf->ln();                  
+
+        // GRAND TOTAL VARIABLES
+   
+        $trans_count = count($trans);
+        $counter = 0;
+        $progress = 0;
+        $t_gross = 0;
+        $all_total = 0;
+        $gtotal = 0;
+        $tot_qty1 = 0;
+        $tot_qty2 = 0;
+        $tot_srp = 0;
+        $g_tot = 0;
+        $gtot_all1 = 0;
+        $gtot_all2 = 0;
+        $tot_all1 = 0;
+        $tot_all2 = 0;
+        // echo print_r($trans);die();
+        foreach ($trans as $val) {
+            // $tot_gross += $val->gross;
+            // $tot_cost += $val->cost;
+        }
+        $tgc_total = 0;
+        $tgc_amount = 0;
+        
+        foreach ($trans as $k => $v) {
+            $qty1 = $qty2 = 0;
+            $pdf->Cell(25, 0, date('m-d-Y',strtotime($v->reg_date)), '', 0, 'L');        
+            $pdf->Cell(25, 0, $v->trans_ref, '', 0, 'L');        
+            $pdf->Cell(15, 0, $v->menu_code, '', 0, 'L');        
+            $pdf->Cell(75, 0, $v->menu_name, '', 0, 'L');        
+            $pdf->Cell(25, 0, num($v->srp,2), '', 0, 'R');  
+            if($v->merch_type == 1){
+                $pdf->Cell(25, 0, $v->qty, '', 0, 'R'); 
+                $pdf->Cell(25, 0,0, '', 0, 'R'); 
+                $tot_qty1 += $v->qty;
+                $qty1 = $v->qty;
+            }else{
+                $pdf->Cell(25, 0,0, '', 0, 'R');
+                $pdf->Cell(25, 0, $v->qty, '', 0, 'R'); 
+                $tot_qty2 += $v->qty;
+                $qty2 = $v->qty;
+            }
+            // $this->make->td(num($res->cost,2), array("style"=>"text-align:right"));
+            $all_total = $v->srp *($qty1 + $qty2);
+            $pdf->Cell(25, 0, num($all_total,2), '', 0, 'R'); 
+            // $pdf->Cell(25, 0,0, num(111,2), 0, 'R');
+            // $this->make->td(num($all_total,2), array("style"=>"text-align:right"));       
+            $pdf->Cell(25, 0, $v->memo, '', 0, 'L');        
+            // $pdf->Cell(25, 0, $v->qty, '', 0, 'R');        
+            // $pdf->Cell(90, 0,"View Transaction", '', 0, 'C');                   
+            $pdf->ln(); 
+            $tot_srp += $v->srp; 
+            $g_tot += $all_total;
+            $tot_all1 = $v->srp * $qty1;
+            $tot_all2 = $v->srp * $qty2;
+            $gtot_all1 += $tot_all1;
+            $gtot_all2 += $tot_all2;              
+            // $t_gross += $v->total_gross;
+            $counter++;
+            $progress = ($counter / $trans_count) * 100;
+            update_load(num($progress));              
+        }
+        $pdf->ln();
+        $pdf->ln();
+            $pdf->Cell(140, 0, 'TOTAL', '', 0, 'L');        
+            $pdf->Cell(25, 0, num($tot_srp,2), '', 0, 'R');
+            $pdf->Cell(25, 0, $tot_qty1, '', 0, 'R');
+            $pdf->Cell(25, 0, $tot_qty2, '', 0, 'R');
+            $pdf->Cell(25, 0, num($g_tot,2), '', 0, 'R');
+        $pdf->ln();
+        $pdf->ln();
+        $pdf->ln();
+        $pdf->Cell(25, 0, 'Total LO', '', 0, 'L');        
+        $pdf->Cell(25, 0, num($gtot_all1,2), '', 0, 'R');
+        $pdf->ln();
+        $pdf->Cell(25, 0, 'Total BM', '', 0, 'L');        
+        $pdf->Cell(25, 0, num($gtot_all2,2), '', 0, 'R');
+        $pdf->ln();
+        $gtotal = $gtot_all1 + $gtot_all2;
+        $pdf->Cell(25, 0, 'G.Total', '', 0, 'L');        
+        $pdf->Cell(25, 0, num($gtotal,2), '', 0, 'R');
+        $pdf->ln();
+
+        update_load(100);
+
+        // -----------------------------------------------------------------------------
+
+        //Close and output PDF document
+        $pdf->Output('merchandise_rep.pdf', 'I');
+
+        //============================================================+
+        // END OF FILE
+        //============================================================+   
+    }
+    public function bad_order_report_excel()
+    {
+        // $this->menu_model->db = $this->load->database('main', TRUE);
+        $this->load->model("dine/menu_model");
+        $this->load->model("dine/reports_model");
+        date_default_timezone_set('Asia/Manila');
+        $this->load->library('Excel');
+        $sheet = $this->excel->getActiveSheet();
+        $filename = 'Merchandise Returns Report';
+        $rc=1;
+        #GET VALUES
+        start_load(0);
+        $branch_code = $_GET['branch_id'];
+            // $post = $this->set_post($_GET['calendar_range']);
+        $setup = $this->setup_model->get_details($branch_code);
+        $set = $setup[0];
+
+        update_load(10);
+        sleep(1);
+        
+        // $member_type_id = $_GET['member_type_id'];  
+
+        $terminal_id = null;
+        // if(CONSOLIDATOR){
+        //     $terminal_id = $_GET['terminal_id'];
+        // }    
+
+        $daterange = $_GET['calendar_range'];        
+        $dates = explode(" to ",$daterange);
+        // $from = date2SqlDateTime($dates[0]);        
+        // $to = date2SqlDateTime($dates[1]);
+        $from = date2SqlDateTime($daterange." 00:00:01");        
+        $to = date2SqlDateTime($daterange." 23:59:59");
+        // $from = date2SqlDateTime($dates[0]. " ".$set->store_open);        
+        // $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
+        // $trans = $this->reports_model->get_daily_sales_rep($from, $to, $terminal_id); 
+        $trans = $this->reports_model->get_bad_order_rep($from, $to, $terminal_id,$branch_code); 
+        $trans_ret = array();    
+
+        // echo "<pre>", print_r($trans), "</pre>";die(); 
+
+        $styleHeaderCell = array(
+            'borders' => array(
+                'allborders' => array(
+                    'style' => PHPExcel_Style_Border::BORDER_THIN
+                )
+            ),
+            'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => array('rgb' => '3C8DBC')
+            ),
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+                'color' => array('rgb' => 'FFFFFF'),
+            )
+        );
+        $styleNum = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_RIGHT,
+            ),
+        );
+        $styleTxt = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+            ),
+        );
+        $styleCenter = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+        );
+        $styleTitle = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        $styleBoldLeft = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        $styleBoldRight = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_RIGHT,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        $styleBoldCenter = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        
+        $headers = array('Date','Reference','SKU','Menu Name', 'Amount','LO','BM','Total','Remarks');
+        $sheet->getColumnDimension('A')->setWidth(20);
+        $sheet->getColumnDimension('B')->setWidth(20);
+        $sheet->getColumnDimension('C')->setWidth(20);
+        $sheet->getColumnDimension('D')->setWidth(20);
+        $sheet->getColumnDimension('E')->setWidth(20);
+        $sheet->getColumnDimension('F')->setWidth(20);
+        $sheet->getColumnDimension('G')->setWidth(20);
+        $sheet->getColumnDimension('H')->setWidth(20);
+        $sheet->getColumnDimension('I')->setWidth(20);
+
+
+        $sheet->mergeCells('A'.$rc.':F'.$rc);
+        $sheet->getCell('A'.$rc)->setValue($set->branch_name);
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTitle);
+        $rc++;
+
+        $sheet->mergeCells('A'.$rc.':F'.$rc);
+        $sheet->getCell('A'.$rc)->setValue($set->address);
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTitle);
+        $rc++;
+
+        $sheet->mergeCells('A'.$rc.':F'.$rc);
+        $sheet->getCell('A'.$rc)->setValue('MERCHANDISE RETURNS REPORT');
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $rc++;
+
+        $sheet->mergeCells('A'.$rc.':D'.$rc);
+        $sheet->getCell('A'.$rc)->setValue('Report Period: '.$daterange);
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $sheet->mergeCells('E'.$rc.':G'.$rc);
+        $sheet->getCell('E'.$rc)->setValue('Report Generated: '.(new \DateTime())->format('Y-m-d H:i:s'));
+        $sheet->getStyle('E'.$rc)->applyFromArray($styleNum);
+        $rc++;
+
+        $sheet->mergeCells('A'.$rc.':D'.$rc);
+        $sheet->getCell('A'.$rc)->setValue('');
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $user = $this->session->userdata('user');
+        $sheet->mergeCells('E'.$rc.':G'.$rc);
+        $sheet->getCell('F'.$rc)->setValue('Generated by:    '.$user["full_name"]);
+        $sheet->getStyle('F'.$rc)->applyFromArray($styleNum);
+        $rc++;
+
+        $col = 'A';
+        foreach ($headers as $txt) {
+            $sheet->getCell($col.$rc)->setValue($txt);
+            $sheet->getStyle($col.$rc)->applyFromArray($styleHeaderCell);
+            $col++;
+        }
+        $rc++;                          
+
+        // GRAND TOTAL VARIABLES
+        $tot_qty = 0;
+        $tot_vat_sales = 0;
+        $tot_vat = 0;
+        $tot_gross = 0;
+        $tot_mod_gross = 0;
+        $tot_sales_prcnt = 0;
+        $tot_cost = 0;
+        $tot_cost_prcnt = 0; 
+        $tot_margin = 0;
+        $counter = 0;
+        $progress = 0;
+        $t_gross = 0;
+        $trans_count = count($trans);
+        $t_gross = 0;
+        $all_total = 0;
+        $gtotal = 0;
+        $tot_qty1 = 0;
+        $tot_qty2 = 0;
+        $tot_srp = 0;
+        $g_tot = 0;
+        $tgc_total = 0;
+        $tgc_amount = 0;
+        $gtot_all1 = 0;
+        $gtot_all2 = 0;
+        $tot_all1 = 0;
+        $tot_all2 = 0;
+        foreach ($trans as $k => $v) {
+          $qty1 = $qty2 = 0;  
+
+            $sheet->getCell('A'.$rc)->setValue(date('m-d-Y',strtotime($v->reg_date)));
+            $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+            $sheet->getCell('B'.$rc)->setValue($v->trans_ref);
+            $sheet->getStyle('B'.$rc)->applyFromArray($styleTxt);
+            $sheet->getCell('C'.$rc)->setValue($v->menu_code);
+            $sheet->getStyle('C'.$rc)->applyFromArray($styleTxt);
+            $sheet->getCell('D'.$rc)->setValue($v->menu_name);
+            $sheet->getStyle('D'.$rc)->applyFromArray($styleTxt);
+            $sheet->getCell('E'.$rc)->setValue(num($v->srp,2));
+            $sheet->getStyle('E'.$rc)->applyFromArray($styleNum);
+            if($v->merch_type == 1){
+                $sheet->getCell('F'.$rc)->setValue($v->qty);
+                $sheet->getStyle('F'.$rc)->applyFromArray($styleNum);
+                $sheet->getCell('G'.$rc)->setValue(0);
+                $sheet->getStyle('G'.$rc)->applyFromArray($styleNum);
+                $tot_qty1 += $v->qty;
+                $qty1 = $v->qty;
+            }else{
+                $sheet->getCell('F'.$rc)->setValue(0);
+                $sheet->getStyle('F'.$rc)->applyFromArray($styleNum);
+                $sheet->getCell('G'.$rc)->setValue($v->qty);
+                $sheet->getStyle('G'.$rc)->applyFromArray($styleNum);
+                $tot_qty2 += $v->qty;
+                $qty2 = $v->qty;
+            }
+            $all_total = $v->srp *($qty1 + $qty2);
+            $sheet->getCell('H'.$rc)->setValue(num($all_total,2));
+            $sheet->getStyle('H'.$rc)->applyFromArray($styleNum);
+            $sheet->getCell('I'.$rc)->setValue($v->memo);
+            $sheet->getStyle('I'.$rc)->applyFromArray($styleTxt);
+            // $this->make->td(num($all_total,2), array("style"=>"text-align:right"));
+            // $this->make->td($v->memo);
+            $tot_cost += $v->cost;
+            $tot_srp += $v->srp;
+            $g_tot += $all_total;
+            $tot_all1 = $v->srp * $qty1;
+            $tot_all2 = $v->srp * $qty2;
+            $gtot_all1 += $tot_all1;
+            $gtot_all2 += $tot_all2;    
+            $counter++;
+            $progress = ($counter / $trans_count) * 100;
+            update_load(num($progress));   
+            $rc++;           
+        }
+
+        $rc++; 
+        $sheet->getCell('D'.$rc)->setValue('Total');
+        $sheet->getStyle('D'.$rc)->applyFromArray($styleTxt);
+        $sheet->getCell('E'.$rc)->setValue(num($tot_srp,2));
+        $sheet->getStyle('E'.$rc)->applyFromArray($styleNum);
+        $sheet->getCell('F'.$rc)->setValue($tot_qty1);
+        $sheet->getStyle('F'.$rc)->applyFromArray($styleNum);
+        $sheet->getCell('G'.$rc)->setValue($tot_qty2);
+        $sheet->getStyle('G'.$rc)->applyFromArray($styleNum);
+        $sheet->getCell('H'.$rc)->setValue(num($g_tot,2));
+        $sheet->getStyle('H'.$rc)->applyFromArray($styleNum);
+        $rc++; 
+        $rc++; 
+        $rc++; 
+        $sheet->getCell('A'.$rc)->setValue('Total LO');
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $sheet->getCell('B'.$rc)->setValue(num($gtot_all1,2));
+        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        $rc++; 
+        $sheet->getCell('A'.$rc)->setValue('Total BM');
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $sheet->getCell('B'.$rc)->setValue(num($gtot_all2,2));
+        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        $rc++; 
+        $gtotal = $gtot_all1 + $gtot_all2;
+        $sheet->getCell('A'.$rc)->setValue('G.Total');
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $sheet->getCell('B'.$rc)->setValue(num($gtotal,2));
+        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        update_load(100);        
+       
+        ob_end_clean();
+        header('Content-type: application/vnd.ms-excel');
+        header('Content-Disposition: attachment;filename="'.$filename.'.xls"');
+        header('Cache-Control: max-age=0');
+        $objWriter = PHPExcel_IOFactory::createWriter($this->excel, 'Excel2007');
+        $objWriter->save('php://output');
+
+        //============================================================+
+        // END OF FILE
+        //============================================================+   
+    }
+    public function bad_order_report_receipt_pdf()
+    {
+        // Include the main TCPDF library (search for installation path).
+        require_once( APPPATH .'third_party/tcpdf.php');
+        $this->load->model("dine/setup_model");
+        date_default_timezone_set('Asia/Manila');
+
+        $_POST['calendar'] = $_GET['calendar'];
+        // $_POST['terminal_id'] = $_GET['terminal_id'];
+        $_POST['branch_id'] = $_GET['branch_id'];
+        $branch_code = $_GET['branch_id'];
+        // create new PDF document
+        $pdf = new TCPDF("P", PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('iPOS');
+        $pdf->SetTitle('Merchandise Returns Report');
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $setup = $this->setup_model->get_details($branch_code);
+        $set = $setup[0];
+        // $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, $set->branch_name, $set->address);
+
+        // set header and footer fonts
+        // $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        // $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        // $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(0,0,0);
+        $pdf->SetAutoPageBreak(TRUE, 0);
+
+        // $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        // $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        // $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        // $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set some language-dependent strings (optional)
+        if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+            require_once(dirname(__FILE__).'/lang/eng.php');
+            $pdf->setLanguageArray($l);
+        }
+
+        // ---------------------------------------------------------
+        $this->load->model('dine/setup_model');
+        // $this->load->database('main', TRUE);
+        // $this->menu_model->db = $this->load->database('main', TRUE);
+        $this->load->model("dine/menu_model");
+        $this->load->model("dine/reports_model");
+        start_load(0);
+
+        // set font
+        $pdf->SetFont('helvetica', 'B', 8);
+
+        // add a page
+        $pdf->AddPage();
+        
+        // $member_type_id = $_GET['member_type_id'];
+           
+        $mrep = $this->merchandise_rep(false,true);
+        $pdf->writeHTML('<pre>'.$mrep.'</pre>', true, false, false, false, '');
+        // $pdf->html('<pre>'.$mrep.'</pre>');
+
+        update_load(100);
+
+        // -----------------------------------------------------------------------------
+
+        //Close and output PDF document
+        $pdf->Output('merchandise_rep.pdf', 'I');
+
+        //============================================================+
+        // END OF FILE
+        //============================================================+   
+    }
+    public function half_price_sales_report()
+    {
+        $data = $this->syter->spawn('sales_rep');        
+        $data['page_title'] = fa('fa-money')." Half Price Sales Report";
+        $data['code'] = HalfPriceRep();
+        $data['add_css'] = array('css/wowdash.css','css/morris/morris.css','css/datepicker/datepicker.css','css/daterangepicker/daterangepicker-bs3.css');
+        $data['add_js'] = array('js/plugins/morris/morris.min.js','js/plugins/datepicker/bootstrap-datepicker.js','js/plugins/daterangepicker/daterangepicker.js');
+        $data['page_no_padding'] = false;
+        $data['sideBarHide'] = false;
+        $data['load_js'] = 'dine/reporting';
+        $data['use_js'] = 'HalfPriceRepJS';
+        $this->load->view('page',$data);
+    }
+    public function half_price_report_gen()
+    {
+        $this->load->model('dine/setup_model');
+        // $this->load->database('main', TRUE);
+        $this->load->model("dine/menu_model");
+        $this->load->model("dine/reports_model");
+        // echo 'das';die();
+        $branch_code = $this->input->post("branch_id");
+        $setup = $this->setup_model->get_details($branch_code);
+        $set = $setup[0];
+        start_load(0);
+        // $menu_cat_id = $this->input->post("menu_cat_id"); 
+        $terminal_id = null;
+        // if(CONSOLIDATOR){
+        //     $this->reports_model->db = $this->load->database('main', TRUE);
+
+        //     $terminal_id = $this->input->post("terminal_id");
+        // }       
+        // $brand = $this->input->post("brand"); 
+        $daterange = $this->input->post("calendar_range");        
+        $dates = explode(" to ",$daterange);
+        
+        // $this->menu_model->db = $this->load->database('main', TRUE);
+        // $from = date2SqlDateTime($dates[0]. " ".$set->store_open);        
+        // $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
+        $from = date2SqlDateTime($dates[0]. " 00:00:01");        
+        $to = date2SqlDateTime($dates[1]. " 23:59:59");        
+        // $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
+        // $trans = $this->reports_model->get_trans_cust_info_rep($from, $to,$fname,$lname,$member_type_id, "", $terminal_id);  
+        $trans = $this->reports_model->get_half_price_rep($from, $to, $branch_code);  
+        $trans_cat = array();
+        // echo $this->reports_model->db->last_query();  die();
+        foreach ($trans as $res) {            
+            $trans_cat[$res->menu_cat_id] = $this->reports_model->get_menu_categories($res->menu_cat_id,$branch_code); 
+        }
+        // echo "<pre>", print_r($trans_cat), "</pre>";die(); 
+        $trans_ret = array();
+        // $trans_ret = $this->menu_model->get_cat_sales_rep_retail($from, $to, "");  
+        $trans_count = count($trans);
+        $trans_count_ret = count($trans_ret);
+        $counter = 0;
+        $this->make->sDiv();
+            $this->make->sTable(array("id"=>"main-tbl", 'class'=>'table reportTBL sortable'));
+                $this->make->sTableHead();
+                    $this->make->sRow();
+                        $this->make->th('Date');
+                        // $this->make->th('Reference');
+                        $this->make->th('Menu Name');
+                        $this->make->th('Promo Code');
+                        $this->make->th('Quantity');
+                        // $this->make->th('Qty');
+                        $this->make->th('Amount');
+                        // $this->make->th('');
+                    $this->make->eRow();
+                $this->make->eTableHead();
+                $this->make->sTableBody();
+                    $tot_qty = 0;
+                    $tot_vat_sales = 0;
+                    $tot_vat = 0;
+                    $tot_gross = 0;
+                    $tot_sales_prcnt = 0;
+                    $tot_cost = 0;
+                    $tot_margin = 0;
+                    $tot_cost_prcnt = 0;
+                    $t_gross = 0;
+                    foreach ($trans as $v) {
+                        // $tot_gross += $v->gross;
+                        // $tot_cost += $v->cost;
+                    }
+                    $tgc_total = 0;
+                    $tgc_amount = 0;
+                    foreach ($trans_cat as $ctk => $ctv) {
+                        // echo "<pre>", print_r($ct), "</pre>";die(); 
+                        foreach ($ctv as $ct) {
+                            $this->make->sRow();
+                                // $this->make->td(date('m-d-Y',strtotime($res->datetime)));
+                                // $this->make->td($res->trans_ref);
+                                $this->make->td($ct->menu_cat_name,array('style'=>'font-weight:600'));
+                                $this->make->td('');
+                                $this->make->td('');
+                                $this->make->td('');
+                                $this->make->td('');
+                                // $this->make->td(num($res->price,2), array("style"=>"text-align:right"));
+                                // $this->make->td(num($res->cost,2), array("style"=>"text-align:right"));
+                           
+                            $this->make->eRow();
+                            foreach ($trans as $res) {
+                                // echo $res->menu_cat_id." ".$ct->menu_cat_id;die();
+                                if($res->menu_cat_id == $ct->menu_cat_id){
+                                    $this->make->sRow();
+                                        $this->make->td(date('m-d-Y',strtotime($res->tsdate)));
+                                        // $this->make->td($res->trans_ref);
+                                        $this->make->td("[".$res->menu_code."] ".$res->menu_name);
+                                        $this->make->td($res->promo_code);
+                                        $this->make->td($res->qty, array("style"=>"text-align:right;"));
+                                        $this->make->td(num($res->price,2), array("style"=>"text-align:right"));
+                                        // $this->make->td(num($res->cost,2), array("style"=>"text-align:right"));
+                                   
+                                    $this->make->eRow();
+                                $tot_cost += $res->price;
+                                $tot_qty += $res->qty;
+                                // $counter++;
+                                // $progress = ($counter / $trans_count) * 100;
+                                // update_load(num($progress));
+                                }
+
+                            }                                   
+                        }                                   
+                    }  
+                    $this->make->sRow();
+                                    // $this->make->td(date('m-d-Y',strtotime($res->datetime)));
+                                    // $this->make->td($res->trans_ref);
+                                    // $this->make->td("[".$res->menu_code."] ".$res->menu_name);
+                                    // $this->make->td($res->promo_code);
+                                    $this->make->td("TOTAL",array('style'=>'font-weight:600'));
+                                    $this->make->td("");
+                                    $this->make->td("");
+                                    $this->make->td($tot_qty, array("style"=>"text-align:right;"));
+                                    $this->make->td(num($tot_cost,2), array("style"=>"text-align:right;font-weight:600"));
+                                    // $this->make->td(num($res->cost,2), array("style"=>"text-align:right"));
+                               
+                                $this->make->eRow();                                 
+                $this->make->eTableBody();
+            $this->make->eTable();
+        $this->make->eDiv();
+        update_load(100);
+        $code = $this->make->code();
+        $json['code'] = $code;        
+        $json['tbl_vals'] = $trans;
+        $json['dates'] = $this->input->post('calendar_range');
+        echo json_encode($json);
+    }
+    public function half_price_report_gen_pdf()
+    {
+        // Include the main TCPDF library (search for installation path).
+        require_once( APPPATH .'third_party/tcpdf.php');
+        $this->load->model("dine/setup_model");
+        date_default_timezone_set('Asia/Manila');
+
+        // create new PDF document
+        $pdf = new TCPDF("L", PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('iPOS');
+        $pdf->SetTitle('Half Price Sales Report');
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+        $branch_code = $_GET['branch_id'];
+        // set default header data
+        $setup = $this->setup_model->get_details($branch_code);
+        $set = $setup[0];
+        $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, $set->branch_name, $set->address);
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set some language-dependent strings (optional)
+        if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+            require_once(dirname(__FILE__).'/lang/eng.php');
+            $pdf->setLanguageArray($l);
+        }
+
+        // ---------------------------------------------------------
+        $this->load->model('dine/setup_model');
+        // $this->load->database('main', TRUE);
+        
+        $this->load->model("dine/menu_model");
+        $this->load->model("dine/reports_model");
+        start_load(0);
+
+        // set font
+        $pdf->SetFont('helvetica', 'B', 11);
+
+        // add a page
+        $pdf->AddPage();
+        
+        // $member_type_id = $_GET['member_type_id'];
+        $terminal_id = null;
+        // if(CONSOLIDATOR){
+        //     $this->reports_model->db = $this->load->database('main', TRUE);
+
+        //     if($_GET['terminal_id']){
+        //         $terminal_id = $_GET['terminal_id'];
+        //     }
+        // }
+        $name = $fname = $lname = "";       
+        // $member_name = $_GET['member_name']; 
+        // if($member_name){
+        // $name = explode(" ",$member_name);
+        //     $fname = $name[0];
+        //     $lname = $name[1];
+        // }            
+        $daterange = $_GET['calendar_range'];        
+        $dates = explode(" to ",$daterange);
+        $from = date2SqlDateTime($dates[0]. " ".$set->store_open);        
+        $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
+        // $trans = $this->reports_model->get_trans_cust_info_rep($from, $to,$fname,$lname, $member_type_id,"",$terminal_id);
+        $trans_cat = array();
+        $trans = $this->reports_model->get_half_price_rep($from, $to, $branch_code); 
+        // $trans_cat = $this->reports_model->get_menu_categories(); 
+        foreach ($trans as $res) {            
+            $trans_cat[$res->menu_cat_id] = $this->reports_model->get_menu_categories($res->menu_cat_id); 
+        }
+        // $trans_ret = $this->menu_model->get_cat_sales_rep_retail($from, $to, "");
+        $trans_ret = array();
+        // echo $this->db->last_query();die();     
+        
+
+        $pdf->Write(0, 'Half Price Sales Report', '', 0, 'L', true, 0, false, false, 0);
+        $pdf->SetLineStyle(array('width' => 0.6, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => 'black'));
+        $pdf->Cell(267, 0, '', 'T', 0, 'C');
+        $pdf->ln(0.9);      
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Write(0, 'Report Period:    ', '', 0, 'L', false, 0, false, false, 0);
+        $pdf->Write(0, $daterange, '', 0, 'L', false, 0, false, false, 0);
+        $pdf->setX(200);
+        $pdf->Write(0, 'Report Generated:    '.(new \DateTime())->format('Y-m-d H:i:s'), '', 0, 'L', true, 0, false, false, 0);
+        // $pdf->Write(0, 'Transaction Time:    ', '', 0, 'L', false, 0, false, false, 0);
+        // $pdf->setX(200);
+        $user = $this->session->userdata('user');
+        $pdf->Write(0, 'Generated by:    '.$user["full_name"], '', 0, 'L', true, 0, false, false, 0);        
+        $fullname = "";   
+        // }
+        $pdf->ln(1);      
+        $pdf->Cell(267, 0, '', 'T', 0, 'C');
+        $pdf->ln();              
+
+        // echo "<pre>", print_r($trans), "</pre>";die();
+
+        // -----------------------------------------------------------------------------
+        // $pdf->SetLineStyle(array('width' => 0.6, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => 'black'));
+        // $pdf->Cell(267, 0, '', 'T', 0, 'C');     
+        // $pdf->ln(1);  
+        $pdf->ln();  
+        $pdf->Cell(30, 0, 'Date', 'B', 0, 'L');        
+        // $pdf->Cell(30, 0, 'Reference', 'B', 0, 'L');         
+        $pdf->Cell(125, 0, 'Menu Name  ', 'B', 0, 'L');         
+        $pdf->Cell(30, 0, 'Promo Code  ', 'B', 0, 'L');         
+        $pdf->Cell(25, 0, 'Qty', 'B', 0, 'R');        
+        $pdf->Cell(25, 0, 'Amount', 'B', 0, 'R');     
+        $pdf->ln();                  
+
+        // GRAND TOTAL VARIABLES
+   
+        $trans_count = count($trans);
+        $counter = 0;
+        $progress = 0;
+        $tot_cost = 0;
+        $tot_qty = 0;
+        // echo print_r($trans);die();
+        foreach ($trans as $val) {
+            // $tot_gross += $val->gross;
+            // $tot_cost += $val->cost;
+        }
+        $tgc_total = 0;
+        $tgc_amount = 0;
+        // foreach ($trans_cat as $ct) {
+        foreach ($trans_cat as $ctk => $ctv) {
+            // echo "<pre>", print_r($ct), "</pre>";die(); 
+            foreach ($ctv as $ct) {
+                $pdf->SetFont('helvetica', 'B', 11);
+                $pdf->Cell(30, 0, $ct->menu_cat_name, '', 0, 'L'); 
+                 $pdf->ln();    
+                foreach ($trans as $k => $v) {
+                    if($v->menu_cat_id == $ct->menu_cat_id){
+                        $pdf->SetFont('helvetica', '', 9);
+                        $pdf->Cell(30, 0, date('m-d-Y',strtotime($v->tsdate)), '', 0, 'L');        
+                        // $pdf->Cell(30, 0, $v->trans_ref, '', 0, 'L');        
+                        $pdf->Cell(125, 0,"[".$v->menu_code."] ". $v->menu_name, '', 0, 'L');        
+                        $pdf->Cell(30, 0, $v->promo_code, '', 0, 'L');        
+                        $pdf->Cell(25, 0, $v->qty, '', 0, 'R');        
+                        $pdf->Cell(25, 0, num($v->price,2), '', 0, 'R');         
+                        // $pdf->Cell(90, 0,"View Transaction", '', 0, 'C');                   
+                        $pdf->ln();                
+                        $tot_cost += $v->price;
+                        $tot_qty += $v->qty;
+                        $counter++;
+                        $progress = ($counter / $trans_count) * 100;
+                        update_load(num($progress));              
+                    }
+                }
+            }
+
+        }
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->Cell(30, 0,"TOTAL", '', 0, 'L');   
+        $pdf->Cell(180, 0, $tot_qty, '', 0, 'R');   
+        $pdf->Cell(25, 0, num($tot_cost,2), '', 0, 'R');   
+        update_load(100);
+
+        // -----------------------------------------------------------------------------
+
+        //Close and output PDF document
+        $pdf->Output('half_price_sales_rep.pdf', 'I');
+
+        //============================================================+
+        // END OF FILE
+        //============================================================+   
+    }
+    public function half_price_report_excel()
+    {
+        // $this->menu_model->db = $this->load->database('main', TRUE);
+        $this->load->model("dine/menu_model");
+        $this->load->model("dine/reports_model");
+        date_default_timezone_set('Asia/Manila');
+        $this->load->library('Excel');
+        $sheet = $this->excel->getActiveSheet();
+        $filename = 'Half Price Sales Report';
+        $rc=1;
+        #GET VALUES
+        start_load(0);
+        $branch_code = $_GET['branch_id'];
+            // $post = $this->set_post($_GET['calendar_range']);
+        $setup = $this->setup_model->get_details($branch_code);
+        $set = $setup[0];
+
+        update_load(10);
+        sleep(1);
+        
+        // $member_type_id = $_GET['member_type_id'];  
+
+        $terminal_id = null;
+        // if(CONSOLIDATOR){
+
+        //     $this->reports_model->db = $this->load->database('main', TRUE);
+            
+        //     $terminal_id = $_GET['terminal_id'];
+        // }    
+
+        $daterange = $_GET['calendar_range'];        
+        $dates = explode(" to ",$daterange);
+        $from = date2SqlDateTime($dates[0]. " ".$set->store_open);        
+        $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
+        // $trans = $this->reports_model->get_daily_sales_rep($from, $to, $terminal_id); 
+        $trans = $this->reports_model->get_half_price_rep($from, $to, $branch_code); 
+        // $trans_cat = $this->reports_model->get_menu_categories();
+        foreach ($trans as $res) {            
+            $trans_cat[$res->menu_cat_id] = $this->reports_model->get_menu_categories($res->menu_cat_id); 
+        } 
+        $trans_ret = array();    
+
+        // echo "<pre>", print_r($trans), "</pre>";die(); 
+
+        $styleHeaderCell = array(
+            'borders' => array(
+                'allborders' => array(
+                    'style' => PHPExcel_Style_Border::BORDER_THIN
+                )
+            ),
+            'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => array('rgb' => '3C8DBC')
+            ),
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+                'color' => array('rgb' => 'FFFFFF'),
+            )
+        );
+        $styleNum = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_RIGHT,
+            ),
+        );
+        $styleTxt = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+            ),
+        );
+        $styleCenter = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+        );
+        $styleTitle = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        $styleBoldLeft = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        $styleBoldRight = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_RIGHT,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        $styleBoldCenter = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        
+        $headers = array('Date','Menu Name', 'Promo Code','Qty','Amount');
+        $sheet->getColumnDimension('A')->setWidth(20);
+        $sheet->getColumnDimension('B')->setWidth(20);
+        $sheet->getColumnDimension('C')->setWidth(20);
+        $sheet->getColumnDimension('D')->setWidth(20);
+        // $sheet->getColumnDimension('E')->setWidth(20);
+        // $sheet->getColumnDimension('F')->setWidth(20);
+
+
+        $sheet->mergeCells('A'.$rc.':F'.$rc);
+        $sheet->getCell('A'.$rc)->setValue($set->branch_name);
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTitle);
+        $rc++;
+
+        $sheet->mergeCells('A'.$rc.':F'.$rc);
+        $sheet->getCell('A'.$rc)->setValue($set->address);
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTitle);
+        $rc++;
+
+        $sheet->mergeCells('A'.$rc.':F'.$rc);
+        $sheet->getCell('A'.$rc)->setValue('Half Price Sales Report');
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $rc++;
+
+        $sheet->mergeCells('A'.$rc.':D'.$rc);
+        $sheet->getCell('A'.$rc)->setValue('Report Period: '.$daterange);
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $sheet->mergeCells('E'.$rc.':G'.$rc);
+        $sheet->getCell('E'.$rc)->setValue('Report Generated: '.(new \DateTime())->format('Y-m-d H:i:s'));
+        $sheet->getStyle('E'.$rc)->applyFromArray($styleNum);
+        $rc++;
+
+        $sheet->mergeCells('A'.$rc.':D'.$rc);
+        $sheet->getCell('A'.$rc)->setValue('');
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $user = $this->session->userdata('user');
+        $sheet->mergeCells('E'.$rc.':G'.$rc);
+        $sheet->getCell('F'.$rc)->setValue('Generated by:    '.$user["full_name"]);
+        $sheet->getStyle('F'.$rc)->applyFromArray($styleNum);
+        $rc++;
+
+        $col = 'A';
+        foreach ($headers as $txt) {
+            $sheet->getCell($col.$rc)->setValue($txt);
+            $sheet->getStyle($col.$rc)->applyFromArray($styleHeaderCell);
+            $col++;
+        }
+        $rc++;                          
+
+        // GRAND TOTAL VARIABLES
+        $tot_qty = 0;
+        $tot_vat_sales = 0;
+        $tot_vat = 0;
+        $tot_gross = 0;
+        $tot_mod_gross = 0;
+        $tot_sales_prcnt = 0;
+        $tot_cost = 0;
+        $tot_cost_prcnt = 0; 
+        $tot_margin = 0;
+        $counter = 0;
+        $progress = 0;
+        $t_gross = 0;
+        $trans_count = count($trans);
+        // foreach ($trans_cat as $ct) {
+        foreach ($trans_cat as $ctk => $ctv) {
+            // echo "<pre>", print_r($ct), "</pre>";die(); 
+            foreach ($ctv as $ct) {
+                $sheet->getCell('A'.$rc)->setValue($ct->menu_cat_name);
+                $sheet->getStyle('A'.$rc)->applyFromArray($styleNum);
+                $rc++;   
+                foreach ($trans as $k => $v) {  
+                    if($v->menu_cat_id == $ct->menu_cat_id){
+                        $sheet->getCell('A'.$rc)->setValue(date('m-d-Y',strtotime($v->tsdate)));
+                        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+                        $sheet->getCell('B'.$rc)->setValue("[".$v->menu_code."] ".$v->menu_name);
+                        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+                        $sheet->getCell('C'.$rc)->setValue($v->promo_code);
+                        $sheet->getStyle('C'.$rc)->applyFromArray($styleNum);
+                        $sheet->getCell('D'.$rc)->setValue(num($v->qty,2));
+                        $sheet->getStyle('D'.$rc)->applyFromArray($styleNum);
+                        $sheet->getCell('E'.$rc)->setValue(num($v->price,2));
+                        $sheet->getStyle('E'.$rc)->applyFromArray($styleNum);
+                        // $sheet->getCell('E'.$rc)->setValue($v->qty);     
+                        // $sheet->getStyle('E'.$rc)->applyFromArray($styleNum);
+                        // $sheet->getCell('F'.$rc)->setValue(num($v->cost,2));
+                        // $sheet->getStyle('F'.$rc)->applyFromArray($styleNum);
+                        $counter++;
+                        $tot_cost += $v->price;
+                        $tot_qty += $v->qty;
+                        $progress = ($counter / $trans_count) * 100;
+                        update_load(num($progress));   
+                        $rc++;           
+                    }
+                }
+            }
+        }
+        $sheet->getCell('A'.$rc)->setValue("TOTAL");
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleNum);
+        $sheet->getCell('D'.$rc)->setValue(num($tot_qty,2));
+        $sheet->getStyle('D'.$rc)->applyFromArray($styleNum);
+        $sheet->getCell('E'.$rc)->setValue(num($tot_cost,2));
+        $sheet->getStyle('E'.$rc)->applyFromArray($styleNum);
+        $rc++; 
+        update_load(100);        
+       
+        ob_end_clean();
+        header('Content-type: application/vnd.ms-excel');
+        header('Content-Disposition: attachment;filename="'.$filename.'.xls"');
+        header('Cache-Control: max-age=0');
+        $objWriter = PHPExcel_IOFactory::createWriter($this->excel, 'Excel2007');
+        $objWriter->save('php://output');
+
+        //============================================================+
+        // END OF FILE
+        //============================================================+   
+    }
+    public function half_price_report_receipt_pdf()
+    {
+        // Include the main TCPDF library (search for installation path).
+        require_once( APPPATH .'third_party/tcpdf.php');
+        $this->load->model("dine/setup_model");
+        date_default_timezone_set('Asia/Manila');
+
+        $_POST['calendar'] = $_GET['calendar'];
+        $_POST['terminal_id'] = $_GET['terminal_id'];
+
+        // create new PDF document
+        $pdf = new TCPDF("P", PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('iPOS');
+        $pdf->SetTitle('Merchandise Returns Report');
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $setup = $this->setup_model->get_details(1);
+        $set = $setup[0];
+        // $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, $set->branch_name, $set->address);
+
+        // set header and footer fonts
+        // $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        // $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        // $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(0,0,0);
+        $pdf->SetAutoPageBreak(TRUE, 0);
+
+        // $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        // $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        // $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        // $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set some language-dependent strings (optional)
+        if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+            require_once(dirname(__FILE__).'/lang/eng.php');
+            $pdf->setLanguageArray($l);
+        }
+
+        // ---------------------------------------------------------
+        $this->load->model('dine/setup_model');
+        // $this->load->database('main', TRUE);
+        $this->menu_model->db = $this->load->database('main', TRUE);
+        $this->load->model("dine/menu_model");
+        $this->load->model("dine/reports_model");
+        start_load(0);
+
+        // set font
+        $pdf->SetFont('helvetica', 'B', 8);
+
+        // add a page
+        $pdf->AddPage();
+        
+        // $member_type_id = $_GET['member_type_id'];
+           
+        $mrep = $this->half_price_rep(false,true,$_POST['calendar']);
+        $pdf->writeHTML('<pre>'.$mrep.'</pre>', true, false, false, false, '');
+        // $pdf->html('<pre>'.$mrep.'</pre>');
+
+        update_load(100);
+
+        // -----------------------------------------------------------------------------
+
+        //Close and output PDF document
+        $pdf->Output('half_price_rep.pdf', 'I');
+
+        //============================================================+
+        // END OF FILE
+        //============================================================+   
+    }
+
+    public function new_gc_sales_rep()
+    {
+        $this->load->model('dine/gift_cards_model');
+        //get sa database yun mga payment types
+        $gc_brands = $this->gift_cards_model->new_get_gift_card_brand();
+
+        $data = $this->syter->spawn('gc_sales_rep');        
+        $data['page_title'] = fa('fa-money')." Gift Cheque Sales Report";
+        $data['code'] = newgcSalesRep(null,$gc_brands);
+        $data['add_css'] = array('css/morris/morris.css','css/datepicker/datepicker.css','css/wowdash.css','css/daterangepicker/daterangepicker-bs3.css');
+        $data['add_js'] = array('js/plugins/morris/morris.min.js','js/plugins/datepicker/bootstrap-datepicker.js','js/plugins/daterangepicker/daterangepicker.js');
+        $data['page_no_padding'] = false;
+        $data['sideBarHide'] = false;
+        $data['load_js'] = 'dine/reporting';
+        $data['use_js'] = 'newgcSalesRepJS';
+        $this->load->view('page',$data);
+    }
+
+     public function new_gc_rep_gen()
+    {
+        $this->load->model('dine/setup_model');
+        // $this->load->database('main', TRUE);
+        $this->load->model("dine/gift_cards_model");
+        
+        $setup = $this->setup_model->get_details(BRANCH_CODE);
+        $set = $setup[0];
+        start_load(0);
+        $gc_type = $this->input->post("gc_type");        
+        // $brand = $this->input->post("brand");        
+        $daterange = $this->input->post("calendar_range");        
+        $dates = explode(" to ",$daterange);
+        // $from = date2SqlDateTime($dates[0]);
+        // $to = date2SqlDateTime($dates[1]);
+        // $date = $this->input->post("date");
+        // $this->menu_model->db = $this->load->database('main', TRUE);
+        
+        $from = date2SqlDateTime($dates[0]. " ".$set->store_open);        
+        $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
+        $trans_ret = $this->gift_cards_model->new_get_gift_cards_rep_retail($from, $to, $gc_type);  
+        // echo $this->db->last_query();              
+        // echo "<pre>", print_r($trans_ret), "</pre>"; die();
+        $trans_count_ret = count($trans_ret);
+        $counter = 0;
+        
+        $this->make->sDiv();
+            $this->make->sTable(array("id"=>"main-tbl", 'class'=>'table reportTBL sortable'));
+                $this->make->sTableHead();
+                    $this->make->sRow();
+                        // $this->make->th('Acknowledgement Receipt #');
+                        // $this->make->th('GC Type');
+                        // $this->make->th('GC Description');
+                        // $this->make->th('GC From');
+                        // $this->make->th('GC To');
+                        // $this->make->th('QTY');
+                        // $this->make->th('Amount');
+                        // $this->make->th('Total');
+                        $this->make->th('Trans Ref');
+                        $this->make->th('Card Number');
+                        $this->make->th('Branch Code');
+                        $this->make->th('Amount');
+                        // $this->make->th('Total');
+                    $this->make->eRow();
+                $this->make->eTableHead();
+                $this->make->sTableBody();
+                    $tot_qty = 0;
+                    $tot_vat_sales = 0;
+                    $tot_vat = 0;
+                    $tot_gross = 0;
+                    $tot_sales_prcnt = 0;
+                    $tot_cost = 0;
+                    $tot_margin = 0;
+                    $tot_cost_prcnt = 0;
+                   
+                    foreach ($trans_ret as $res) {
+                        // $tot_gross += $res->gross;
+
+                        $this->make->sRow();
+                            $this->make->td($res->ref);
+                            $this->make->td($res->reference);
+                            // $this->make->td($res->brand_id);
+                            // $this->make->td($res->description_id); 
+                            // $this->make->td($res->gc_from);
+                            // $this->make->td($res->gc_to);                           
+                            $this->make->td($res->branch_code); 
+                            $this->make->td(num($res->amount), array("style"=>"text-align:right"));                                                         
+                            // $this->make->td(num($res->price), array("style"=>"text-align:right"));
+                            // $this->make->td(num($res->gross), array("style"=>"text-align:right"));
+                        $this->make->eRow();
+
+                         // Grand Total
+                        // $tot_qty += $res->qty;
+                        
+                        $tot_cost_prcnt = 0;
+
+                        $counter++;
+                        $progress = ($counter / $trans_count_ret) * 100;
+                        update_load(num($progress));
+
+                    }    
+                    // $this->make->sRow();
+                    //     $this->make->th('Grand Total');
+                    //     $this->make->th('');
+                    //     $this->make->th('');
+                    //     $this->make->th('');
+                    //     $this->make->th('');
+                    //     $this->make->th(num($tot_qty), array("style"=>"text-align:right"));
+                    //     $this->make->th('');
+                    //     $this->make->th(num($tot_gross), array("style"=>"text-align:right"));                                           
+                    // $this->make->eRow();                                 
+                $this->make->eTableBody();
+            $this->make->eTable();
+        $this->make->eDiv();
+        update_load(100);
+        $code = $this->make->code();
+        $json['code'] = $code;        
+        $json['tbl_vals'] = $trans_ret;
+        $json['dates'] = $this->input->post('calendar_range');
+        echo json_encode($json);
+    }
+
+    public function new_gc_rep_excel()
+    {
+        // $this->menu_model->db = $this->load->database('main', TRUE);
+        $this->load->model("dine/gift_cards_model");
+      
+        date_default_timezone_set('Asia/Manila');
+        $this->load->library('Excel');
+        $sheet = $this->excel->getActiveSheet();
+        $filename = 'Gift Cheque Sales Report';
+        $rc=1;
+        #GET VALUES
+        start_load(0);
+            // $post = $this->set_post($_GET['calendar_range']);
+        $setup = $this->setup_model->get_details(BRANCH_CODE);
+        $set = $setup[0];
+
+        update_load(10);
+        sleep(1);
+        
+        $gc_type = $_GET['gc_type'];        
+        $daterange = $_GET['calendar_range'];        
+        $dates = explode(" to ",$daterange);
+        // $from = date2SqlDateTime($dates[0]);
+        // $to = date2SqlDateTime($dates[1]);
+        $from = date2SqlDateTime($dates[0]. " ".$set->store_open);        
+        $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
+        
+        $trans_ret = $this->gift_cards_model->new_get_gift_cards_rep_retail($from, $to, $gc_type);  
+        $styleHeaderCell = array(
+            'borders' => array(
+                'allborders' => array(
+                    'style' => PHPExcel_Style_Border::BORDER_THIN
+                )
+            ),
+            'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => array('rgb' => '3C8DBC')
+            ),
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+                'color' => array('rgb' => 'FFFFFF'),
+            )
+        );
+        $styleNum = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_RIGHT,
+            ),
+        );
+        $styleTxt = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+            ),
+        );
+        $styleCenter = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+        );
+        $styleTitle = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        $styleBoldLeft = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        $styleBoldRight = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_RIGHT,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        $styleBoldCenter = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 12,
+            )
+        );
+        
+        // $headers = array('Acknowledgement Receipt #', 'GC Type','GC Description','GC From','GC To','Qty','Amount','Total');
+        $headers = array('Trans Ref','Card Number','Branch Code', 'Amount');
+        $sheet->getColumnDimension('A')->setWidth(20);
+        $sheet->getColumnDimension('B')->setWidth(20);
+        $sheet->getColumnDimension('C')->setWidth(20);
+        $sheet->getColumnDimension('D')->setWidth(20);
+        $sheet->getColumnDimension('E')->setWidth(20);
+
+        $sheet->mergeCells('A'.$rc.':E'.$rc);
+        // $sheet->getCell('A'.$rc)->setValue($set->branch_name);
+        $sheet->getCell('A'.$rc)->setValue(BRANCH_HEADER);
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTitle);
+        $rc++;
+
+        // $sheet->mergeCells('A'.$rc.':E'.$rc);
+        // $sheet->getCell('A'.$rc)->setValue($set->address);
+        // $sheet->getStyle('A'.$rc)->applyFromArray($styleTitle);
+        // $rc++;
+
+        $sheet->mergeCells('A'.$rc.':E'.$rc);
+        $sheet->getCell('A'.$rc)->setValue('Gift Cheque Sales Report');
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $rc++;
+
+        $sheet->mergeCells('A'.$rc.':D'.$rc);
+        $sheet->getCell('A'.$rc)->setValue('Report Period: '.$daterange);
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $sheet->mergeCells('E'.$rc.':G'.$rc);
+        $sheet->getCell('E'.$rc)->setValue('Report Generated: '.(new \DateTime())->format('Y-m-d H:i:s'));
+        $sheet->getStyle('E'.$rc)->applyFromArray($styleNum);
+        $rc++;
+
+        $sheet->mergeCells('A'.$rc.':D'.$rc);
+        $sheet->getCell('A'.$rc)->setValue('Transaction Time:');
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        $user = $this->session->userdata('user');
+        $sheet->mergeCells('E'.$rc.':G'.$rc);
+        $sheet->getCell('F'.$rc)->setValue('Generated by:    '.$user["full_name"]);
+        $sheet->getStyle('F'.$rc)->applyFromArray($styleNum);
+        $rc++;
+
+        $col = 'A';
+        foreach ($headers as $txt) {
+            $sheet->getCell($col.$rc)->setValue($txt);
+            $sheet->getStyle($col.$rc)->applyFromArray($styleHeaderCell);
+            $col++;
+        }
+        $rc++;                          
+
+        // GRAND TOTAL VARIABLES
+        $tot_qty = 0;
+        $tot_vat_sales = 0;
+        $tot_vat = 0;
+        $tot_gross = 0;
+        $tot_mod_gross = 0;
+        $tot_sales_prcnt = 0;
+        $tot_cost = 0;
+        $tot_cost_prcnt = 0; 
+        $tot_margin = 0;
+        $counter = 0;
+        $progress = 0;
+       
+
+        
+        $rc++; 
+
+        //retail
+        $tot_gross_ret = 0;
+        if(count($trans_ret) > 0){                    
+
+            // GRAND TOTAL VARIABLES
+            $tot_qty = 0;
+            $tot_vat_sales = 0;
+            $tot_vat = 0;
+            $tot_mod_gross = 0;
+            $tot_sales_prcnt = 0;
+            $tot_cost = 0;
+            $tot_cost_prcnt = 0; 
+            $tot_margin = 0;
+            $counter = 0;
+            $progress = 0;
+            $trans_count = count($trans_ret);
+
+            foreach ($trans_ret as $k => $v) {
+                // $tot_gross_ret += $v->gross; 
+                $sheet->getCell('A'.$rc)->setValue($v->ref.' ');
+                $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+                $sheet->getCell('B'.$rc)->setValue($v->reference);
+                $sheet->getStyle('B'.$rc)->applyFromArray($styleTxt);
+                $sheet->getCell('C'.$rc)->setValue($v->branch_code);
+                $sheet->getStyle('C'.$rc)->applyFromArray($styleTxt);
+
+                $sheet->getCell('D'.$rc)->setValue($v->amount);
+                $sheet->getStyle('D'.$rc)->applyFromArray($styleTxt);
+                // $sheet->getCell('C'.$rc)->setValue($v->description_id);
+                // $sheet->getStyle('C'.$rc)->applyFromArray($styleTxt);
+
+                // $sheet->getCell('D'.$rc)->setValue($v->gc_from);
+                // $sheet->getStyle('D'.$rc)->applyFromArray($styleTxt);
+                // $sheet->getCell('E'.$rc)->setValue($v->gc_to);
+                // $sheet->getStyle('E'.$rc)->applyFromArray($styleTxt);
+
+                // // $sheet->getCell('C'.$rc)->setValue(num($v->vat_sales));
+                // // $sheet->getStyle('C'.$rc)->applyFromArray($styleNum);
+                // // $sheet->getCell('D'.$rc)->setValue(num($v->vat));     
+                // // $sheet->getStyle('D'.$rc)->applyFromArray($styleNum);
+                // $sheet->getCell('F'.$rc)->setValue(num($v->qty));     
+                // $sheet->getStyle('F'.$rc)->applyFromArray($styleNum);
+                // $sheet->getCell('G'.$rc)->setValue(num($v->price));     
+                // $sheet->getStyle('G'.$rc)->applyFromArray($styleNum);
+                // $sheet->getStyle('H'.$rc)->applyFromArray($styleNum);
+                // $sheet->getCell('H'.$rc)->setValue(num($v->gross));                                     
+                 
+
+                // Grand Total
+                // $tot_qty += $v->qty;
+                // $tot_vat_sales += $v->vat_sales;
+                // $tot_vat += $v->vat;
+                // $tot_gross += $v->gross;
+                $tot_sales_prcnt = 0;
+                // $tot_cost += $v->cost;
+                $tot_cost_prcnt = 0;
+
+                $counter++;
+                $progress = ($counter / $trans_count) * 100;
+                update_load(num($progress));   
+                $rc++;           
+            }
+
+            // $sheet->getCell('A'.$rc)->setValue('Grand Total');
+            // $sheet->getStyle('A'.$rc)->applyFromArray($styleBoldLeft);
+            // $sheet->getCell('F'.$rc)->setValue(num($tot_qty));
+            // $sheet->getStyle('F'.$rc)->applyFromArray($styleBoldRight);
+            // // $sheet->getCell('C'.$rc)->setValue(num($tot_vat_sales));     
+            // // $sheet->getStyle('C'.$rc)->applyFromArray($styleBoldRight);
+            // // $sheet->getCell('D'.$rc)->setValue(num($tot_vat));     
+            // // $sheet->getStyle('D'.$rc)->applyFromArray($styleBoldRight);
+            
+            // $sheet->getCell('H'.$rc)->setValue(num($tot_gross_ret));     
+            // $sheet->getStyle('H'.$rc)->applyFromArray($styleBoldRight);
+           
+            $rc++; 
+        }
+
+
+     
+
+        
+        update_load(100);        
+       
+        ob_end_clean();
+        header('Content-type: application/vnd.ms-excel');
+        header('Content-Disposition: attachment;filename="'.$filename.'.xls"');
+        header('Cache-Control: max-age=0');
+        $objWriter = PHPExcel_IOFactory::createWriter($this->excel, 'Excel2007');
+        $objWriter->save('php://output');
+
+        //============================================================+
+        // END OF FILE
+        //============================================================+   
+    }
+
+    public function new_gc_rep_pdf()
+    {
+        // Include the main TCPDF library (search for installation path).
+        require_once( APPPATH .'third_party/tcpdf.php');
+        $this->load->model("dine/setup_model");
+        date_default_timezone_set('Asia/Manila');
+
+        // create new PDF document
+        $pdf = new TCPDF("L", PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator(PDF_CREATOR);
+        $pdf->SetAuthor('iPOS');
+        $pdf->SetTitle('Gift Cheque Sales Report');
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $setup = $this->setup_model->get_details(BRANCH_CODE);
+        $set = $setup[0];
+        $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, $set->branch_name, $set->address);
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set some language-dependent strings (optional)
+        if (@file_exists(dirname(__FILE__).'/lang/eng.php')) {
+            require_once(dirname(__FILE__).'/lang/eng.php');
+            $pdf->setLanguageArray($l);
+        }
+
+        // ---------------------------------------------------------
+        $this->load->model('dine/setup_model');
+        // $this->load->database('main', TRUE);
+        $this->load->model("dine/gift_cards_model");
+        
+        // $this->menu_model->db = $this->load->database('main', TRUE);
+        start_load(0);
+
+        // set font
+        $pdf->SetFont('helvetica', 'B', 11);
+
+        // add a page
+        $pdf->AddPage();
+         
+         $gc_type = $_GET['gc_type'];     
+        $daterange = $_GET['calendar_range'];        
+        $dates = explode(" to ",$daterange);
+        // $from = date2SqlDateTime($dates[0]);
+        // $to = date2SqlDateTime($dates[1]);
+        $from = date2SqlDateTime($dates[0]. " ".$set->store_open);        
+        $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
+        
+        $trans_ret = $this->gift_cards_model->new_get_gift_cards_rep_retail($from, $to, $gc_type);
+        // $trans_payment = $this->menu_model->get_payment_date($from, $to);
+        // echo $this->db->last_query();die();                  
+
+
+        $pdf->Write(0, 'Gift Cheque Sales Report', '', 0, 'L', true, 0, false, false, 0);
+        $pdf->SetLineStyle(array('width' => 0.6, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => 'black'));
+        $pdf->Cell(267, 0, '', 'T', 0, 'C');
+        $pdf->ln(0.9);      
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Write(0, 'Report Period:    ', '', 0, 'L', false, 0, false, false, 0);
+        $pdf->Write(0, $daterange, '', 0, 'L', false, 0, false, false, 0);
+        $pdf->setX(200);
+        $pdf->Write(0, 'Report Generated:    '.(new \DateTime())->format('Y-m-d H:i:s'), '', 0, 'L', true, 0, false, false, 0);
+        $pdf->Write(0, 'Transaction Time:    ', '', 0, 'L', false, 0, false, false, 0);
+        $pdf->setX(200);
+        $user = $this->session->userdata('user');
+        $pdf->Write(0, 'Generated by:    '.$user["full_name"], '', 0, 'L', true, 0, false, false, 0);        
+        $pdf->ln(1);      
+        $pdf->Cell(267, 0, '', 'T', 0, 'C');
+        $pdf->ln();              
+
+        // echo "<pre>", print_r($trans), "</pre>";die();
+
+        // -----------------------------------------------------------------------------
+        $pdf->SetLineStyle(array('width' => 0.5, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => 'black'));
+        $pdf->Cell(50, 0, 'Trans Ref', 'B', 0, 'L');  
+        $pdf->Cell(50, 0, 'Card Number', 'B', 0, 'L');
+        $pdf->Cell(100, 0, 'Branch Code', 'B', 0, 'L');  
+        $pdf->Cell(68, 0, 'Amount', 'B', 0, 'L');      
+        // $pdf->Cell(32, 0, 'GC Description', 'B', 0, 'L');
+        // $pdf->Cell(32, 0, 'GC From', 'B', 0, 'L');
+        // $pdf->Cell(32, 0, 'GC To', 'B', 0, 'L');        
+        // // $pdf->Cell(32, 0, 'VAT Sales', 'B', 0, 'C');        
+        // // $pdf->Cell(32, 0, 'VAT', 'B', 0, 'C');        
+        // $pdf->Cell(32, 0, 'Qty', 'B', 0, 'R');        
+        // $pdf->Cell(32, 0, 'Amount', 'B', 0, 'R');        
+        // $pdf->Cell(32, 0, 'Total', 'B', 0, 'R');
+        $pdf->ln();                  
+
+        // GRAND TOTAL VARIABLES
+        $tot_qty = 0;
+        $tot_vat_sales = 0;
+        $tot_vat = 0;
+        $tot_gross = 0;
+        $tot_mod_gross = 0;
+        $tot_sales_prcnt = 0;
+        $tot_cost = 0;
+        $tot_cost_prcnt = 0; 
+        $tot_margin = 0;
+        $counter = 0;
+        $progress = 0;
+        // echo print_r($trans);die();
+       
+        
+
+
+        //retail
+        $tot_gross_ret = 0;
+        if(count($trans_ret) > 0){
+            
+            $pdf->ln(); 
+
+            $tot_qty = 0;
+            $tot_vat_sales = 0;
+            $tot_vat = 0;
+            $tot_mod_gross = 0;
+            $tot_sales_prcnt = 0;
+            $tot_cost = 0;
+            $tot_cost_prcnt = 0; 
+            $tot_margin = 0;
+            $counter = 0;
+            $progress = 0;
+            $trans_count = count($trans_ret);
+           
+            foreach ($trans_ret as $k => $v) {
+                // $tot_gross_ret += $v->gross;
+                $pdf->Cell(50, 0, $v->ref, '', 0, 'L');
+                $pdf->Cell(50, 0, $v->reference, '', 0, 'L');
+                $pdf->Cell(100, 0, $v->branch_code, '', 0, 'L');
+                $pdf->Cell(80, 0, $v->amount, '', 0, 'L');         
+                // $pdf->Cell(32, 0, $v->description_id, '', 0, 'L');
+                // $pdf->Cell(32, 0, $v->gc_from, '', 0, 'L');
+                // $pdf->Cell(32, 0, $v->gc_to, '', 0, 'L');        
+                // // $pdf->Cell(32, 0, num($v->vat_sales), '', 0, 'R');        
+                // // $pdf->Cell(32, 0, num($v->vat), '', 0, 'R');        
+                // $pdf->Cell(32, 0, num($v->qty), '', 0, 'R');        
+                // $pdf->Cell(32, 0, num($v->price), '', 0, 'R');        
+                
+                // $pdf->Cell(32, 0, num($v->gross), '', 0, 'R');        
+                $pdf->ln();                
+
+                // Grand Total
+                // $tot_qty += $v->qty;
+                // $tot_vat_sales += $v->vat_sales;
+                // $tot_vat += $v->vat;
+                // $tot_gross += $v->gross;
+                $tot_sales_prcnt = 0;
+                // $tot_cost += $v->cost;
+                // $tot_margin += $v->gross - 0;
+                $tot_cost_prcnt = 0;
+
+                $counter++;
+                $progress = ($counter / $trans_count) * 100;
+                update_load(num($progress));              
+            }
+
+            // update_load(100);        
+            // $pdf->Cell(45, 0, "Grand Total", 'T', 0, 'L');
+            // $pdf->Cell(32, 0, "", 'T', 0, 'R');
+            // $pdf->Cell(32, 0, "", 'T', 0, 'R');
+            // $pdf->Cell(32, 0, "", 'T', 0, 'R');      
+            // $pdf->Cell(32, 0, "", 'T', 0, 'R'); 
+            // $pdf->Cell(32, 0, num($tot_qty), 'T', 0, 'R');
+            // $pdf->Cell(32, 0, "", 'T', 0, 'R');        
+            // // $pdf->Cell(32, 0, num($tot_vat_sales), 'T', 0, 'R');        
+            // // $pdf->Cell(32, 0, num($tot_vat), 'T', 0, 'R');        
+            // $pdf->Cell(32, 0, num($tot_gross_ret), 'T', 0, 'R'); 
+        }
+
+        update_load(100);    
+        //Close and output PDF document
+        $pdf->Output('gift_cheque_sales_report.pdf', 'I');
+
+        //============================================================+
+        // END OF FILE
+        //============================================================+   
     }
 
 }

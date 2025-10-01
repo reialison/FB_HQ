@@ -8419,7 +8419,7 @@ class Prints extends CI_Controller {
         $data = $this->syter->spawn('sales_rep');        
         $data['page_title'] = fa('fa-money')."Discounts Report";
         $data['code'] = DiscRep();
-        $data['add_css'] = array('css/morris/morris.css','css/datepicker/datepicker.css','css/daterangepicker/daterangepicker-bs3.css');
+        $data['add_css'] = array('css/morris/morris.css','css/datepicker/datepicker.css','css/wowdash.css','css/daterangepicker/daterangepicker-bs3.css');
         $data['add_js'] = array('js/plugins/morris/morris.min.js','js/plugins/datepicker/bootstrap-datepicker.js','js/plugins/daterangepicker/daterangepicker.js');
         $data['page_no_padding'] = false;
         $data['sideBarHide'] = false;
@@ -8477,7 +8477,7 @@ class Prints extends CI_Controller {
         $args_date["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
 
         $trans = $this->cashier_model->get_trans_sales_discounts_backoffice(null, $args);  
-        // echo $this->cashier_model->db->last_query(); die();
+        echo $this->cashier_model->db->last_query(); die();
         // $trans = $this->menu_model->get_voided_cat_sales_rep($from, $to, $menu_cat_id);  
         // $trans_ret = $this->menu_model->get_voided_cat_sales_rep_retail($from, $to, "");  
         
@@ -10819,6 +10819,24 @@ class Prints extends CI_Controller {
                                          .append_chars('-'.num($zread->sc_pwd_vat_exempt,2),"left",PAPER_R2_COL2," ")."\r\n";
                 // $print_str .= append_chars('',"right",12," ").align_center('',PAPER_TOTAL_COL_2," ")
                 //                   .append_chars('----------',"left",PAPER_TOTAL_COL_2," ")."\r\n";
+
+                $less_v = json_decode($zread->notax_breakdown,true);
+                if(isset($less_v['types'])){
+                    foreach ($less_v['types'] as $lv => $lvat) {
+                        // $slv = 0;
+                        // if($less_vat < $lvat['amount']){
+                        //    $slv = $lvat['amount'] - $less_vat;
+                        //    $tlv = $slv - $lvat['amount'];
+                        // }else{
+                        //    $tlv =  $lvat['amount'];
+                        // }
+                        // echo "<pre>",print_r($lvat['amount']),"</pre>";
+                        $print_str .= append_chars(substrwords(ucwords(strtoupper($lv)),18,"")." ".$lvat['disc_rate']."%","right",PAPER_R2_COL1," ")
+                                             .append_chars('-'.num($lvat['amount'],2),"left",PAPER_R2_COL2," ")."\r\n";
+                    // $taxwithheld += $lvat['amount'];
+                    }
+                }
+
                 $print_str .= PAPER_LINE_SINGLE."\r\n";
 
                 $print_str .= append_chars(substrwords('GROSS SALES',18,""),"right",PAPER_R2_COL1," ")
@@ -10912,17 +10930,29 @@ class Prints extends CI_Controller {
                 // $print_str .= PAPER_LINE_SINGLE."\r\n";
                 $print_str .= "\r\n\r\n";
 
+                $payments_types =  json_decode($zread->gc_ref,true);
+                $print_str .= append_chars(substrwords('GC BREAKDOWN:',18,""),"right",PAPER_RD_COL_1," ").align_center(null,PAPER_RD_COL_2," ")
+                              .append_chars(null,"left",PAPER_RD_COL_3," ")."\r\n";
+                if($payments_types){
+                    foreach ($payments_types as $code => $val) {
+                        $print_str .= append_chars(substrwords(ucwords(strtoupper($code)),18,""),"right",PAPER_RD_COL_1," ").align_center($val['qty'],PAPER_RD_COL_2," ")
+                                  .append_chars(num($val['amount'],2),"left",PAPER_RD_COL_3_3," ")."\r\n";                            
+                    }
+                }
+                $print_str .= PAPER_LINE_SINGLE."\r\n\r\n";    
 
 
-                $print_str .= append_chars(substrwords('REFUND',18,""),"right",PAPER_R2_COL1," ")
+                $print_str .= append_chars(substrwords('REFUND',18,""),"right",PAPER_RD_COL_1," ").align_center($zread->refund_qty,PAPER_RD_COL_2," ")
                              .append_chars(num($zread->refund,2),"left",PAPER_R2_COL2," ")."\r\n";
-                $print_str .= append_chars(substrwords('CANCELLED TRANS',18,""),"right",PAPER_R2_COL1," ")
+                $print_str .= append_chars(substrwords('VOID SALES',18,""),"right",PAPER_RD_COL_1," ").align_center($zread->void_qty,PAPER_RD_COL_2," ")
+                             .append_chars(num($zread->void,2),"left",PAPER_R2_COL2," ")."\r\n";
+                $print_str .= append_chars(substrwords('CANCELLED TRANS',18,""),"right",PAPER_RD_COL_1," ").align_center($zread->cancelled_qty,PAPER_RD_COL_2," ")
                              .append_chars(num(($zread->cancelled),2),"left",PAPER_R2_COL2," ")."\r\n";
 
-                $print_str .= append_chars(substrwords('ITEM VOID',18,""),"right",PAPER_R2_COL1," ")
+                $print_str .= append_chars(substrwords('CANCELLED ORDERS',18,""),"right",PAPER_RD_COL_1," ").align_center($zread->cancelled_order_qty,PAPER_RD_COL_2," ")
                              .append_chars(num($zread->cancelled_order,2),"left",PAPER_R2_COL2," ")."\r\n";
                 $print_str .= append_chars(substrwords('Local Tax',18,""),"right",PAPER_R2_COL1," ")
-                             .append_chars($zread->local_tax,"left",PAPER_R2_COL2," ")."\r\n";
+                             .append_chars(num($zread->local_tax),"left",PAPER_R2_COL2," ")."\r\n";
                 $print_str .= "\r\n";
             #TRANS COUNT
 
@@ -11045,51 +11075,51 @@ class Prints extends CI_Controller {
                     $print_str .= "\r\n";
                 }
             #CATEGORIES
-                $cats = json_decode($zread->menu_categories,true);
-                $print_str .= append_chars('Menu Categories:',"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
-                             .append_chars('',"left",PAPER_RD_COL_3," ")."\r\n";
-                $qty = 0;
-                $total = 0;
-                foreach ($cats as $id => $val) {
-                    if($val['qty'] > 0){
-                        $print_str .= append_chars(substrwords($val['name'],18,""),"right",PAPER_R3_COL1," ").align_center($val['qty'],PAPER_R3_COL2," ")
-                                   .append_chars(num($val['amount'],2),"left",PAPER_R3_COL3," ")."\r\n";
+                // $cats = json_decode($zread->menu_categories,true);
+                // $print_str .= append_chars('Menu Categories:',"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
+                //              .append_chars('',"left",PAPER_RD_COL_3," ")."\r\n";
+                // $qty = 0;
+                // $total = 0;
+                // foreach ($cats as $id => $val) {
+                //     if($val['qty'] > 0){
+                //         $print_str .= append_chars(substrwords($val['name'],18,""),"right",PAPER_R3_COL1," ").align_center($val['qty'],PAPER_R3_COL2," ")
+                //                    .append_chars(num($val['amount'],2),"left",PAPER_R3_COL3," ")."\r\n";
                     
-                    }
-                 }
+                //     }
+                //  }
                 // $print_str .= "-----------------"."\r\n";
-                $print_str .= PAPER_LINE_SINGLE."\r\n";
-                $cat_total_qty = $qty;
-                $print_str .= append_chars("SubTotal","right",PAPER_R3_COL1," ").align_center($zread->menu_category_qty,PAPER_R3_COL2," ")
-                              .append_chars(num($zread->menu_category_total,2),"left",PAPER_R3_COL3," ")."\r\n";
-                $print_str .= append_chars("Modifiers Total","right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
-                              .append_chars(num($zread->mods_total,2),"left",PAPER_R3_COL3," ")."\r\n";
-                 $print_str .= append_chars("SubModifier Total","right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
-                              .append_chars(num($zread->submods_total,2),"left",PAPER_R3_COL3," ")."\r\n";
-                if($zread->item_total > 0){
-                 $print_str .= append_chars("Retail Items Total","right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
-                               .append_chars(num($zread->item_total,2),"left",PAPER_R3_COL3," ")."\r\n";
-                }
+                // $print_str .= PAPER_LINE_SINGLE."\r\n";
+                // $cat_total_qty = $qty;
+                // $print_str .= append_chars("SubTotal","right",PAPER_R3_COL1," ").align_center($zread->menu_category_qty,PAPER_R3_COL2," ")
+                //               .append_chars(num($zread->menu_category_total,2),"left",PAPER_R3_COL3," ")."\r\n";
+                // $print_str .= append_chars("Modifiers Total","right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                //               .append_chars(num($zread->mods_total,2),"left",PAPER_R3_COL3," ")."\r\n";
+                //  $print_str .= append_chars("SubModifier Total","right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                //               .append_chars(num($zread->submods_total,2),"left",PAPER_R3_COL3," ")."\r\n";
+                // if($zread->item_total > 0){
+                //  $print_str .= append_chars("Retail Items Total","right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                //                .append_chars(num($zread->item_total,2),"left",PAPER_R3_COL3," ")."\r\n";
+                // }
 
-                $print_str .= append_chars("Total","right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
-                              .append_chars(num($zread->menu_cat_total,2),"left",PAPER_R3_COL3," ")."\r\n";
-                $print_str .= "\r\n";
+                // $print_str .= append_chars("Total","right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                //               .append_chars(num($zread->menu_cat_total,2),"left",PAPER_R3_COL3," ")."\r\n";
+                // $print_str .= "\r\n";
             #SUBCATEGORIES
-                $subcats = json_decode($zread->sub_cats,true);
-                // $print_str .= append_chars('Menu Subcategories:',"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
-                $print_str .= append_chars('Menu Types:',"right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
-                             .append_chars('',"left",PAPER_R3_COL3," ")."\r\n";
-                $qty = 0;
-                $total = 0;
-                foreach ($subcats as $id => $val) {
-                    $print_str .= append_chars($val['name'],"right",PAPER_R3_COL1," ").align_center($val['qty'],PAPER_R3_COL2," ")
-                               .append_chars(num($val['amount'],2),"left",PAPER_R3_COL3," ")."\r\n";
+                // $subcats = json_decode($zread->sub_cats,true);
+                // // $print_str .= append_chars('Menu Subcategories:',"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
+                // $print_str .= append_chars('Menu Types:',"right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                //              .append_chars('',"left",PAPER_R3_COL3," ")."\r\n";
+                // $qty = 0;
+                // $total = 0;
+                // foreach ($subcats as $id => $val) {
+                //     $print_str .= append_chars($val['name'],"right",PAPER_R3_COL1," ").align_center($val['qty'],PAPER_R3_COL2," ")
+                //                .append_chars(num($val['amount'],2),"left",PAPER_R3_COL3," ")."\r\n";
                   
-                 }
-                // $print_str .= "-----------------"."\r\n";
-                $print_str .= PAPER_LINE_SINGLE."\r\n";
-                $print_str .= append_chars("Total","right",PAPER_R3_COL1," ").align_center($zread->sub_cat_qty,PAPER_R3_COL2," ")
-                              .append_chars(num($zread->sub_cat_total,2),"left",PAPER_R3_COL3," ")."\r\n";
+                //  }
+                // // $print_str .= "-----------------"."\r\n";
+                // $print_str .= PAPER_LINE_SINGLE."\r\n";
+                // $print_str .= append_chars("Total","right",PAPER_R3_COL1," ").align_center($zread->sub_cat_qty,PAPER_R3_COL2," ")
+                //               .append_chars(num($zread->sub_cat_total,2),"left",PAPER_R3_COL3," ")."\r\n";
                 // $print_str .= append_chars("Modifiers Total","right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
                 //               .append_chars(numInt($trans_menus['mods_total']),"left",PAPER_RD_COL_3_3," ")."\r\n";
                 // $print_str .= append_chars("SubModifier Total","right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
@@ -11098,43 +11128,43 @@ class Prints extends CI_Controller {
                 //               .append_chars(numInt($total+$trans_menus['mods_total']+$trans_menus['submods_total']),"left",PAPER_RD_COL_3_3," ")."\r\n";
                 $print_str .= "\r\n";
             #FREE MENUS
-                $free = json_decode($zread->free_menus,true);
-                $print_str .= append_chars('Free Menus:',"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
-                             .append_chars('',"left",PAPER_RD_COL_3," ")."\r\n";
-                $fm = array();
-                foreach ($free as $ms) {
-                    if(!isset($fm[$ms['menu_id']])){
-                        $mn = array();
-                        $mn['name'] = $ms['menu_name'];
-                        $mn['cat_id'] = $ms['cat_id'];
-                        $mn['qty'] = $ms['qty'];
-                        $mn['amount'] = $ms['sell_price'] * $ms['qty'];
-                        $mn['sell_price'] = $ms['sell_price'];
-                        $mn['code'] = $ms['menu_code'];
-                        // $mn['free_user_id'] = $ms->free_user_id;
-                        $fm[$ms['menu_id']] = $mn;
-                    }
-                    else{
-                        $mn = $fm[$ms['menu_id']];
-                        $mn['qty'] += $ms['qty'];
-                        $mn['amount'] += $ms['sell_price'] * $ms['qty'];
-                        $fm[$ms['menu_id']] = $mn;
-                    }
-                }
-                $qty = 0;
-                $total = 0;
-                foreach ($fm as $menu_id => $val) {
-                    $print_str .= append_chars($val['name'],"right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
-                               .append_chars(($val['qty']),"left",PAPER_R3_COL3," ")."\r\n";
-                    $qty += $val['qty'];
-                    $total += $val['amount'];
-                }
-                // $print_str .= "-----------------"."\r\n";
-                $print_str .= PAPER_LINE_SINGLE."\r\n";
-                $print_str .= append_chars("Total","right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
-                              .append_chars($zread->free_qty,"left",PAPER_R3_COL3," ")."\r\n";
-                $print_str .= "\r\n";
-                $print_str .= "\r\n";    
+                // $free = json_decode($zread->free_menus,true);
+                // $print_str .= append_chars('Free Menus:',"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
+                //              .append_chars('',"left",PAPER_RD_COL_3," ")."\r\n";
+                // $fm = array();
+                // foreach ($free as $ms) {
+                //     if(!isset($fm[$ms['menu_id']])){
+                //         $mn = array();
+                //         $mn['name'] = $ms['menu_name'];
+                //         $mn['cat_id'] = $ms['cat_id'];
+                //         $mn['qty'] = $ms['qty'];
+                //         $mn['amount'] = $ms['sell_price'] * $ms['qty'];
+                //         $mn['sell_price'] = $ms['sell_price'];
+                //         $mn['code'] = $ms['menu_code'];
+                //         // $mn['free_user_id'] = $ms->free_user_id;
+                //         $fm[$ms['menu_id']] = $mn;
+                //     }
+                //     else{
+                //         $mn = $fm[$ms['menu_id']];
+                //         $mn['qty'] += $ms['qty'];
+                //         $mn['amount'] += $ms['sell_price'] * $ms['qty'];
+                //         $fm[$ms['menu_id']] = $mn;
+                //     }
+                // }
+                // $qty = 0;
+                // $total = 0;
+                // foreach ($fm as $menu_id => $val) {
+                //     $print_str .= append_chars($val['name'],"right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                //                .append_chars(($val['qty']),"left",PAPER_R3_COL3," ")."\r\n";
+                //     $qty += $val['qty'];
+                //     $total += $val['amount'];
+                // }
+                // // $print_str .= "-----------------"."\r\n";
+                // $print_str .= PAPER_LINE_SINGLE."\r\n";
+                // $print_str .= append_chars("Total","right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                //               .append_chars($zread->free_qty,"left",PAPER_R3_COL3," ")."\r\n";
+                // $print_str .= "\r\n";
+                // $print_str .= "\r\n";    
             #FOOTER
                 // $print_str .= append_chars(substrwords('Invoice Start: ',18,""),"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
                 //              .append_chars($zread->invoice_start,"left",PAPER_RD_COL_3_3," ")."\r\n";
@@ -15442,7 +15472,7 @@ class Prints extends CI_Controller {
             $this->do_print($print_str,$asJson);
     }
 
-    public function menu_item_sales_backoffice($asJson=false,$args=array(),$return_print_str=false,$print_date){
+    public function menu_item_sales_backoffice_v2($asJson=false,$args=array(),$return_print_str=false,$print_date){
           ////hapchan
             ini_set('memory_limit', '-1');
             set_time_limit(3600);
@@ -15892,7 +15922,245 @@ class Prints extends CI_Controller {
             $this->do_print($print_str,$asJson);
     }
 
-    public function excel_menu_item_sales($sales_id=null,$noPrint=true){
+    public function menu_item_sales_backoffice($asJson=false,$args=array(),$return_print_str=false,$print_date){
+          ////hapchan
+            ini_set('memory_limit', '-1');
+            set_time_limit(3600);
+            
+            $print_str = $this->print_header();
+            $user = $this->session->userdata('user');
+            $time = $this->site_model->get_db_now();
+            $post = $this->set_post();
+            // echo print_r($post);die();
+            $curr = $this->search_current();
+            
+            $zread = $this->cashier_model->get_store_zread(null,$args);
+            
+            $zread_jsn = $this->cashier_model->get_store_zread(null,$args,false);
+
+            if($zread){
+                $zread = $zread[0];
+            }else{
+                $zread = $this->table_object('store_zread');
+                
+            } 
+
+            if(!$zread_jsn){
+                $zread_jsn[0] = $this->table_object('store_zread');
+            }
+
+            $zread = $this->consolidate_store_zread($zread,$zread_jsn);
+
+            // echo 'haha';exit();
+            $gross = 0;//$trans_menus['gross'];
+            $net = $zread->net_sales;
+            $charges = $zread->total_charges;
+            $discounts = $zread->total_discount;
+            $local_tax = $zread->local_tax;
+            $ewt1_count = 0;//$trans['ewt1_count'];
+            $ewt2_count = 0;//$trans['ewt2_count'];
+            $ewt5_count = 0;//$trans['ewt5_count'];
+            $ewt = 0;
+            $ewt = $ewt1_count + $ewt2_count + $ewt5_count;
+
+           
+
+
+            $title_name = "MENU ITEM SALES REPORT";
+            $print_str .= align_center($title_name,PAPER_WIDTH," ")."\r\n";
+            $print_str .= align_center("TERMINAL ".$post['terminal'],PAPER_WIDTH," ")."\r\n";
+            $print_str .= append_chars('Printed On','right',11," ").append_chars(": ".date2SqlDateTime($time),'right',19," ")."\r\n";
+            $print_str .= append_chars('Printed BY','right',11," ").append_chars(": ".$user['full_name'],'right',19," ")."\r\n";
+            $print_str .= PAPER_LINE."\r\n";
+            $print_str .= align_center($print_date,PAPER_WIDTH," ")."\r\n";
+            // $print_str .= align_center(sql2DateTime($post['from'])." - ".sql2DateTime($post['to']),PAPER_WIDTH," ")."\r\n";
+            // if($post['employee'] != "All")
+                // $print_str .= align_center($post['employee'],PAPER_WIDTH," ")."\r\n";
+
+            $print_str .= "\r\n";
+            #CATEGORIES
+                $cats = json_decode($zread->menu_categories,true);
+                $menus = json_decode($zread->menus,true);
+                $menu_trans_type = json_decode($zread->menu_trans_type,true);
+                $menu_total = $zread->menu_total;
+                $total_qty = $zread->menu_total_qty;
+
+                $modifiers = json_decode($zread->modifiers,true);
+                $sub_modifiers = json_decode($zread->sub_modifiers,true);
+
+                usort($cats, function($a, $b) {
+                    return $b['amount'] - $a['amount'];
+                });
+              $this->make->sDiv();
+            $this->make->sTable(array("id"=>"main-tbl", 'class'=>'table reportTBL sortable'));
+                $this->make->sTableHead();
+                    $this->make->sRow();
+                        $this->make->th('Menu Name');
+                        $this->make->th('Qty');
+                        // $this->make->th('VAT Sales');
+                        // $this->make->th('VAT');
+                        $this->make->th('Total');
+                        // $this->make->th('Sales (%)');
+                        // $this->make->th('Cost');
+                        // $this->make->th('Cost (%)');
+                        // $this->make->th('Margin');
+                    $this->make->eRow();
+                $this->make->eTableHead();
+                $this->make->sTableBody();
+                    foreach ($cats as $cat_id => $ca) {
+                        if($ca['qty'] > 0){
+                            // $print_str .=
+                            //      append_chars($ca['name'],'right',18," ")
+                            //     .append_chars(num($ca['qty']),'right',10," ")
+                            //     .append_chars(num($ca['amount']).'','left',10," ")."\r\n";
+                            // $print_str .= append_chars($ca['name'],"right",PAPER_RD_COL_1," ").align_center(num($ca['qty']),PAPER_RD_COL_2," ")
+                            //     .append_chars(num($ca['amount']).'',"left",9," ")."\r\n";
+                            // $print_str .= PAPER_LINE."\r\n";
+
+                            $this->make->sRow(array("style"=>"background-color:yellow;"));
+                                $this->make->td($ca['name']);
+                                $this->make->td($ca['qty'], array("style"=>"text-align:right"));                            
+                                // $this->make->td(num($res->vat_sales), array("style"=>"text-align:right"));                            
+                                // $this->make->td(num($res->vat), array("style"=>"text-align:right"));                            
+                                $this->make->td(num($ca['amount']), array("style"=>"text-align:right"));                            
+                            $this->make->eRow();
+
+
+                            foreach ($menus as $menu_id => $res) {
+                                if($ca['cat_id'] == $res['cat_id']){
+                                
+                                // echo "<pre>", print_r($menus), "</pre>"; die();
+                                // $print_str .=
+                                    // append_chars($res['name'],'right',PAPER_RD_COL_1," ")
+                                    // .append_chars(num($res['qty']),'right',PAPER_RD_COL_2," ")
+                                    // .append_chars(num($res['amount']),'left',9," ")
+                                    // ."\r\n";
+
+                                    $this->make->sRow();
+                                        $this->make->td('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;['.$res['code'].']'.$res['name']);
+                                        $this->make->td($res['qty'], array("style"=>"text-align:right"));                            
+                                        // $this->make->td(num($res->vat_sales), array("style"=>"text-align:right"));                            
+                                        // $this->make->td(num($res->vat), array("style"=>"text-align:right"));                            
+                                        $this->make->td(num($res['amount']), array("style"=>"text-align:right"));                            
+                                    $this->make->eRow();
+
+                                // $print_str .=
+                                //     append_chars(null,'right',PAPER_RD_COL_1," ")
+                                //     .append_chars(num($res['amount']),'right',PAPER_RD_COL_2," ")
+                                //     // .append_chars(num( ($res['amount'] / $menu_total) * 100).'%','left',9," ")
+                                //     ."\r\n";
+                                    
+                                    foreach ($modifiers as $mnu_id => $mods) {
+                                        if($mnu_id == $res['menu_id']){
+                                            foreach ($mods as $mod_id => $val) {
+                                                // $print_str .= append_chars('*'.$val['name'],"right",PAPER_RD_COL_1," ").align_center($val['qty'],PAPER_RD_COL_2," ")
+                                                //        .append_chars(numInt($val['total_amt']),"left",PAPER_RD_COL_3_3," ")."\r\n";
+
+                                                $where = array('mod_id'=>$mod_id);
+                                                $dd = $this->site_model->get_details($where,'modifiers');
+
+                                                $this->make->sRow();
+                                                    $this->make->td('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*['.$dd[0]->mod_code.']'.$val['name']);
+                                                    $this->make->td($val['qty'], array("style"=>"text-align:right"));                            
+                                                    // $this->make->td(num($res->vat_sales), array("style"=>"text-align:right"));                            
+                                                    // $this->make->td(num($res->vat), array("style"=>"text-align:right"));                            
+                                                    $this->make->td(num($val['total_amt']), array("style"=>"text-align:right"));                            
+                                                $this->make->eRow();
+
+                                                $menu_submods = json_decode($zread->submodifiers,true);
+                                                foreach($sub_modifiers as $m_id => $mval){
+
+                                                    if($mod_id == $m_id){
+
+                                                        foreach ($mval as $sub_id => $sval) {
+                                                            $this->make->sRow();
+                                                                $this->make->td('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*['.$dd[0]->mod_code.']'.$sval['name']);
+                                                                $this->make->td($sval['qty'], array("style"=>"text-align:right"));                            
+                                                                // $this->make->td(num($res->vat_sales), array("style"=>"text-align:right"));                            
+                                                                // $this->make->td(num($res->vat), array("style"=>"text-align:right"));                            
+                                                                $this->make->td(num($sval['total_amt']), array("style"=>"text-align:right"));                            
+                                                            $this->make->eRow();
+                                                    //         $this->make->sRow();
+                                                    //             $this->make->td('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*['.$sval[0]->mod_code.']'.$sval['name']);
+                                                    //             $this->make->td($sval['qty'], array("style"=>"text-align:right"));                            
+                                                    //             // $this->make->td(num($res->vat_sales), array("style"=>"text-align:right"));                            
+                                                    //             // $this->make->td(num($res->vat), array("style"=>"text-align:right"));                            
+                                                    //             $this->make->td(num(123), array("style"=>"text-align:right"));                            
+                                                    //         $this->make->eRow();
+                                                        }
+
+                                                    }
+
+                                                }
+
+                                            }
+                                        } 
+                                     }
+                                }
+                            }
+                        // $print_str .= PAPER_LINE."\r\n";
+                        }
+                    }
+                $this->make->eTableBody();
+            $this->make->eTable();
+        $this->make->eDiv();
+        $this->make->sDiv();
+            $this->make->sTable(array("id"=>"mains-tbl", 'class'=>'table reportTBL sortable'));
+                $subcats = json_decode($zread->food_type,true);
+                $qty = 0;
+                $total = 0;
+                $this->make->sTableHead();
+                    $this->make->sRow();
+                        $this->make->th('FOOD TYPE', array("style"=>"text-align:center","colspan"=>2));
+                        // $this->make->th('Qty');
+                        // // $this->make->th('VAT Sales');
+                        // // $this->make->th('VAT');
+                        // $this->make->th('Total');
+                        // $this->make->th('Sales (%)');
+                        // $this->make->th('Cost');
+                        // $this->make->th('Cost (%)');
+                        // $this->make->th('Margin');
+                    $this->make->eRow();
+                $this->make->eTableHead();
+                foreach ($subcats as $id => $val) {
+                    // $print_str .= append_chars($val['name'],"right",PAPER_RD_COL_1," ").align_center($val['qty'],PAPER_RD_COL_2," ")
+                    //            .append_chars(numInt($val['amount']),"left",PAPER_RD_COL_3_3," ")."\r\n";
+                    $this->make->sRow();
+                        $this->make->td($val['name']);
+                        $this->make->td(numInt($val['amount']), array("style"=>"text-align:right"));                            
+                        // $this->make->td(num($res->vat_sales), array("style"=>"text-align:right"));                            
+                        // $this->make->td(num($res->vat), array("style"=>"text-align:right"));                            
+                        // $this->make->td(num($ca['amount']), array("style"=>"text-align:right"));                            
+                    $this->make->eRow();
+                    $qty += $val['qty'];
+                    $total += $val['amount'];
+                }
+            $this->make->eTable();
+        $this->make->eDiv();
+
+        $print_str = $this->make->code();
+        if ($return_print_str) {
+                return $print_str;
+            } 
+
+            // if($asJson == false){
+            //     $this->manager_model->add_event_logs($user['id'],"Menu Item Sales","View");    
+            // }else{
+            //     $this->manager_model->add_event_logs($user['id'],"Menu Item Sales","Print");                    
+            // }
+            // $this->session->set_userdata('pdf_data','<pre>'.$print_str.'</pre>') ;
+            // if(PRINT_VERSION && PRINT_VERSION == 'V2'){
+            //     $this->do_print_v2($print_str,$asJson);  
+            // }else if(PRINT_VERSION && PRINT_VERSION == 'V3' && $asJson){
+            //     echo $this->html_print($print_str);
+            // }else{
+            //     $this->do_print($print_str,$asJson);
+            // }
+            $this->session->set_userdata('pdf_data','<pre>'.$print_str.'</pre>') ; 
+            $this->do_print($print_str,$asJson);
+    }
+
+    public function excel_menu_item_sales_v1($sales_id=null,$noPrint=true){
         // echo "<pre>",print_r($sales_id),"</pre>";die();
         $this->load->library('Excel');
         $sheet = $this->excel->getActiveSheet();
@@ -15988,6 +16256,8 @@ class Prints extends CI_Controller {
 
         echo $printss;
     }
+
+
     // public function menuitem_sales_rep_gen()
     // {
         
@@ -16414,28 +16684,29 @@ class Prints extends CI_Controller {
         $daterange = $_GET['calendar_range'];        
         $branch_code = $_GET['branch_id'];        
         $dates = explode(" to ",$daterange);
-        // $from = date2SqlDateTime($dates[0]);
-        // $to = date2SqlDateTime($dates[1]);
-        $from = date2SqlDateTime($dates[0]);        
-        $to = date2SqlDateTime($dates[1]); 
 
+        $from = date2Sql($dates[0]);        
+        $to = date2Sql($dates[1]);
         $args = array();
-        $args["trans_sales.trans_ref  IS NOT NULL"] = array('use'=>'where','val'=>null,'third'=>false);
-        $args["trans_sales.inactive = 0"] = array('use'=>'where','val'=>null,'third'=>false);
-        $args["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
-        $args["trans_sales.branch_code  = '".$branch_code."' "] = array('use'=>'where','val'=>null,'third'=>false);
-        // $args["trans_sales.type != '".MGTPROMO."'"] = array('use'=>'where','val'=>null,'third'=>false);
-        // $args["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+        $args["trans_date  >= '".$from."' AND trans_date <= '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+        $args['branch_code'] = $branch_code;      
+       
+        $zread = $this->cashier_model->get_store_zread(null,$args);
+            
+        $zread_jsn = $this->cashier_model->get_store_zread(null,$args,false);
 
-        // if(CONSOLIDATOR){
-        //     if($terminal_id != null){
-        //         $args['trans_sales.terminal_id'] = $terminal_id;
-        //     }
-        // }else{
-        //     $args['trans_sales.terminal_id'] = TERMINAL_ID;
-        // }
+        if($zread){
+            $zread = $zread[0];
+        }else{
+            $zread = $this->table_object('store_zread');
+            
+        } 
 
-        $args_date["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+        if(!$zread_jsn){
+            $zread_jsn[0] = $this->table_object('store_zread');
+        }
+
+        $zread = $this->consolidate_store_zread($zread,$zread_jsn);
 
         $ddate = sql2Date($dates[0]);
         $filename = 'Menu Item Sales Report '.$ddate;
@@ -16445,46 +16716,18 @@ class Prints extends CI_Controller {
             $print_str = $this->print_header();
             $user = $this->session->userdata('user');
             $time = $this->site_model->get_db_now();
-            $post = $this->set_post();
-            $curr = $this->search_current();
-            $trans = $this->trans_sales($args,$curr);
-            // var_dump($trans['net']); die();
-            $sales = $trans['sales'];
-            $trans_menus = $this->menu_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-            $trans_charges = $this->charges_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-            $trans_discounts = $this->discounts_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-            $tax_disc = $trans_discounts['tax_disc_total'];
-            $no_tax_disc = $trans_discounts['no_tax_disc_total'];
-            $trans_local_tax = $this->local_tax_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-            $trans_tax = $this->tax_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-            $trans_no_tax = $this->no_tax_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-            $trans_zero_rated = $this->zero_rated_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-            $payments = $this->payment_sales($sales['settled']['ids'],$curr,$post['branch_code']);
+            
+            $cats = json_decode($zread->menu_categories,true);
+            $sub_cats = json_decode($zread->sub_cats,true);
+            $food_type = json_decode($zread->food_type,true);
+            $menus = json_decode($zread->menus,true);
+            $menu_trans_type = json_decode($zread->menu_trans_type,true);
+            $menu_total = $zread->menu_total;
+            $total_qty = $zread->menu_total_qty;
 
-            $gross = $trans_menus['gross']; 
-            $net = $trans['net'];
-            $charges = $trans_charges['total']; 
-            $discounts = $trans_discounts['total']; 
-            $local_tax = $trans_local_tax['total']; 
-            $ewt1_count = $trans['ewt1_count'];
-            $ewt2_count = $trans['ewt2_count'];
-            $ewt5_count = $trans['ewt5_count'];
-            $ewt = 0;
-            $ewt = $ewt1_count + $ewt2_count + $ewt5_count;
-            $less_vat = (($gross+$charges+$local_tax) - $discounts) - $ewt - $net;
-            if($less_vat < 0)
-                $less_vat = 0;
-            $tax = $trans_tax['total'];
-            $no_tax = $trans_no_tax['total'];
-            $zero_rated = $trans_zero_rated['total'];
-            $no_tax -= $zero_rated;
-            update_load(55);
-            $cats = $trans_menus['cats'];                 
-            $menus = $trans_menus['menus'];
-            $menu_total = $trans_menus['menu_total'];
-            $total_qty = $trans_menus['total_qty'];
-            $menu_trans_type = $trans_menus['menu_trans_type'];
-            update_load(60);
+            $modifiers = json_decode($zread->modifiers,true);
+            $sub_modifiers = json_decode($zread->sub_modifiers,true);
+
             usort($cats, function($a, $b) {
                 return $b['amount'] - $a['amount'];
             });
@@ -16560,6 +16803,10 @@ class Prints extends CI_Controller {
         // $sheet->getColumnDimension('H')->setWidth(20);
         // $sheet->getColumnDimension('I')->setWidth(20);
 
+        $sheet->mergeCells('A'.$rc.':C'.$rc);
+        $sheet->getCell('A'.$rc)->setValue($branch_code);
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTitle);
+        $rc++;
 
         $sheet->mergeCells('A'.$rc.':C'.$rc);
         $sheet->getCell('A'.$rc)->setValue('Menu Item Sales Report');
@@ -16794,7 +17041,7 @@ class Prints extends CI_Controller {
                             $sheet->getStyle('C'.$rc)->applyFromArray($styleNum);
                             $rc++;
 
-                            foreach ($trans_menus['mods'] as $mnu_id => $val) {
+                            foreach ($modifiers as $mnu_id => $val) {
                                 if($mnu_id == $res['menu_id']){
                                     // foreach ($mods as $mod_id => $val) {
 
@@ -16810,7 +17057,7 @@ class Prints extends CI_Controller {
                                         $sheet->getStyle('C'.$rc)->applyFromArray($styleNum);
                                         $rc++;
 
-                                        foreach($trans_menus['submods'] as $m_id => $mval){
+                                        foreach($submodifiers as $m_id => $mval){
 
                                             if($mod_id == $m_id){
 
@@ -16839,7 +17086,7 @@ class Prints extends CI_Controller {
         $rc++;
         $rc++;
 
-        $subcats = $trans_menus['sub_cats'];
+        $subcats = $sub_cats;
         $qty = 0;
         $total = 0;
         $sheet->mergeCells('A'.$rc.':B'.$rc);
@@ -16854,7 +17101,7 @@ class Prints extends CI_Controller {
             $rc++;
         }
         if(!OTHER_MENU_ITEM_SALES){
-            $subcats = $trans_menus['food_type'];
+            $subcats = $food_type;
             $qty = 0;
             $total = 0;
             $sheet->mergeCells('A'.$rc.':B'.$rc);
@@ -16895,76 +17142,76 @@ class Prints extends CI_Controller {
         // } 
         
         $rc++;
-        $sheet->getCell('A'.$rc)->setValue('GROSS SALES');
-        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
-        $sheet->getCell('B'.$rc)->setValue(num($gross,2));
-        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
+        // $sheet->getCell('A'.$rc)->setValue('GROSS SALES');
+        // $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        // $sheet->getCell('B'.$rc)->setValue(num($gross,2));
+        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        // $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
 
-        $rc++;
-        $txt = $charges;
-        if($charges > 0)
-            $txt = "(".num($charges,2).")";
-        $net_no_adds = $net-$charges-$local_tax;
-        $sheet->getCell('A'.$rc)->setValue('Charges');
-        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
-        $sheet->getCell('B'.$rc)->setValue($txt);
-        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
+        // $rc++;
+        // $txt = $charges;
+        // if($charges > 0)
+        //     $txt = "(".num($charges,2).")";
+        // $net_no_adds = $net-$charges-$local_tax;
+        // $sheet->getCell('A'.$rc)->setValue('Charges');
+        // $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        // $sheet->getCell('B'.$rc)->setValue($txt);
+        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        // $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
 
-        $rc++;
-        $txt = $local_tax;
-        if($local_tax > 0)
-            $txt = "(".$local_tax.")";
-        $sheet->getCell('A'.$rc)->setValue('Local Tax');
-        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
-        $sheet->getCell('B'.$rc)->setValue($txt);
-        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
+        // $rc++;
+        // $txt = $local_tax;
+        // if($local_tax > 0)
+        //     $txt = "(".$local_tax.")";
+        // $sheet->getCell('A'.$rc)->setValue('Local Tax');
+        // $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        // $sheet->getCell('B'.$rc)->setValue($txt);
+        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        // $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
 
-        $rc++;
-        $sheet->getCell('A'.$rc)->setValue('LESS Discounts');
-        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
-        $sheet->getCell('B'.$rc)->setValue('-'.num($discounts,2));
-        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
+        // $rc++;
+        // $sheet->getCell('A'.$rc)->setValue('LESS Discounts');
+        // $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        // $sheet->getCell('B'.$rc)->setValue('-'.num($discounts,2));
+        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        // $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
 
-        $rc++;
-        $sheet->getCell('A'.$rc)->setValue('LESS VAT');
-        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
-        $sheet->getCell('B'.$rc)->setValue('-'.num($less_vat,2));
-        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
+        // $rc++;
+        // $sheet->getCell('A'.$rc)->setValue('LESS VAT');
+        // $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        // $sheet->getCell('B'.$rc)->setValue('-'.num($less_vat,2));
+        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        // $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
 
-        if(EWT_DISCOUNT){
-            $sheet->getCell('A'.$rc)->setValue('LESS EWT 1%');
-            $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
-            $sheet->getCell('B'.$rc)->setValue('-'.num(numInt($ewt1_count)));
-            $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-            $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
-            $rc++;
-            $sheet->getCell('A'.$rc)->setValue('LESS EWT 2%');
-            $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
-            $sheet->getCell('B'.$rc)->setValue('-'.num(numInt($ewt2_count)));
-            $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-            $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
-            $rc++;
-            $sheet->getCell('A'.$rc)->setValue('LESS EWT 5%');
-            $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
-            $sheet->getCell('B'.$rc)->setValue('-'.num(numInt($ewt5_count)));
-            $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-            $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
-            $rc++;
+        // if(EWT_DISCOUNT){
+        //     $sheet->getCell('A'.$rc)->setValue('LESS EWT 1%');
+        //     $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        //     $sheet->getCell('B'.$rc)->setValue('-'.num(numInt($ewt1_count)));
+        //     $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        //     $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
+        //     $rc++;
+        //     $sheet->getCell('A'.$rc)->setValue('LESS EWT 2%');
+        //     $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        //     $sheet->getCell('B'.$rc)->setValue('-'.num(numInt($ewt2_count)));
+        //     $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        //     $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
+        //     $rc++;
+        //     $sheet->getCell('A'.$rc)->setValue('LESS EWT 5%');
+        //     $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        //     $sheet->getCell('B'.$rc)->setValue('-'.num(numInt($ewt5_count)));
+        //     $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        //     $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
+        //     $rc++;
 
-        }
+        // }
 
-        $rc++;
-        $net_no_adds = $net-$charges-$local_tax;
-        $sheet->getCell('A'.$rc)->setValue('TOTAL SALES');
-        $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
-        $sheet->getCell('B'.$rc)->setValue(num($net,2));
-        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
+        // $rc++;
+        // $net_no_adds = $net-$charges-$local_tax;
+        // $sheet->getCell('A'.$rc)->setValue('TOTAL SALES');
+        // $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+        // $sheet->getCell('B'.$rc)->setValue(num($net,2));
+        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        // $sheet->getStyle('A'.$rc.':B'.$rc)->applyFromArray(array('font'=>array('bold' => true,'size'=>13)));
 
         
 
@@ -16977,36 +17224,36 @@ class Prints extends CI_Controller {
         //     $rc++;
         // }
         // $net_no_adds = $net-$charges-$local_tax;
-        // $sheet->getCell('A'.$rc)->setValue('Total Sales: ');
-        // $sheet->getCell('B'.$rc)->setValue(num($net));
-        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        // $rc++;
-        // $txt = numInt(($charges));
-        // if($charges > 0)
-        //     $txt = "(".numInt(($charges)).")";
-        // $sheet->getCell('A'.$rc)->setValue('Total Charges: ');
-        // $sheet->getCell('B'.$rc)->setValue($txt);
-        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        // $rc++;
-        // $txt = numInt(($local_tax));
-        // if($local_tax > 0)
-        //     $txt = "(".numInt(($local_tax)).")";
-        // $sheet->getCell('A'.$rc)->setValue('Total Local Tax: ');
-        // $sheet->getCell('B'.$rc)->setValue($txt);
-        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        // $rc++;
-        // $sheet->getCell('A'.$rc)->setValue('Total Discounts: ');
-        // $sheet->getCell('B'.$rc)->setValue(num($discounts));
-        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        // $rc++;
-        // $sheet->getCell('A'.$rc)->setValue('Total VAT EXEMPT: ');
-        // $sheet->getCell('B'.$rc)->setValue(num($less_vat));
-        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        // $rc++;
-        // $sheet->getCell('A'.$rc)->setValue('Total Gross Sales: ');
-        // $sheet->getCell('B'.$rc)->setValue(num($gross));
-        // $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
-        // $rc++;
+        $sheet->getCell('A'.$rc)->setValue('Total Sales: ');
+        $sheet->getCell('B'.$rc)->setValue(num($zread->net_sales));
+        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        $rc++;
+        $txt = numInt($zread->total_charges);
+        if($zread->total_charges > 0)
+            $txt = "(".numInt(($charges)).")";
+        $sheet->getCell('A'.$rc)->setValue('Total Charges: ');
+        $sheet->getCell('B'.$rc)->setValue($txt);
+        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        $rc++;
+        $txt = numInt($zread->local_tax);
+        if($zread->local_tax > 0)
+            $txt = "(".numInt(($local_tax)).")";
+        $sheet->getCell('A'.$rc)->setValue('Total Local Tax: ');
+        $sheet->getCell('B'.$rc)->setValue($txt);
+        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        $rc++;
+        $sheet->getCell('A'.$rc)->setValue('Total Discounts: ');
+        $sheet->getCell('B'.$rc)->setValue(num($zread->total_discount));
+        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        $rc++;
+        $sheet->getCell('A'.$rc)->setValue('Total VAT EXEMPT: ');
+        $sheet->getCell('B'.$rc)->setValue(num($zread->sc_pwd_vat_exempt));
+        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        $rc++;
+        $sheet->getCell('A'.$rc)->setValue('Total Gross Sales: ');
+        $sheet->getCell('B'.$rc)->setValue(num($zread->total_sales));
+        $sheet->getStyle('B'.$rc)->applyFromArray($styleNum);
+        $rc++;
         
         update_load(100);
         // if (ob_get_contents())
@@ -17098,27 +17345,31 @@ class Prints extends CI_Controller {
         // }
 
         $daterange = $_GET['calendar_range'];        
+        $branch_code = $_GET['branch_id'];        
         $dates = explode(" to ",$daterange);
-        // $from = date2SqlDateTime($dates[0]);
-        // $to = date2SqlDateTime($dates[1]);
-        $from = date2SqlDateTime($dates[0]);        
-        $to = date2SqlDateTime($dates[1]); 
 
+        $from = date2Sql($dates[0]);        
+        $to = date2Sql($dates[1]);
         $args = array();
-        $args["trans_sales.trans_ref  IS NOT NULL"] = array('use'=>'where','val'=>null,'third'=>false);
-        $args["trans_sales.inactive = 0"] = array('use'=>'where','val'=>null,'third'=>false);
-        $args["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
-        $args["trans_sales.branch_code  = '".$branch_code."' "] = array('use'=>'where','val'=>null,'third'=>false);
-        // $args["trans_sales.type != '".MGTPROMO."'"] = array('use'=>'where','val'=>null,'third'=>false);
-        // $args["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+        $args["trans_date  >= '".$from."' AND trans_date <= '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+        $args['branch_code'] = $branch_code;      
+       
+        $zread = $this->cashier_model->get_store_zread(null,$args);
+            
+        $zread_jsn = $this->cashier_model->get_store_zread(null,$args,false);
 
-        // if(CONSOLIDATOR){
-        //     if($terminal_id != null){
-        //         $args['trans_sales.terminal_id'] = $terminal_id;
-        //     }
-        // }else{
-        //     $args['trans_sales.terminal_id'] = TERMINAL_ID;
-        // }       
+        if($zread){
+            $zread = $zread[0];
+        }else{
+            $zread = $this->table_object('store_zread');
+            
+        } 
+
+        if(!$zread_jsn){
+            $zread_jsn[0] = $this->table_object('store_zread');
+        }
+
+        $zread = $this->consolidate_store_zread($zread,$zread_jsn);
 
         // $args_date["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
         // $post = $this->set_post($_GET['calendar_range']);
@@ -17127,45 +17378,16 @@ class Prints extends CI_Controller {
         $print_str = $this->print_header();
         $user = $this->session->userdata('user');
         $time = $this->site_model->get_db_now();
-        $post = $this->set_post();
-        $curr = $this->search_current();
-        $trans = $this->trans_sales($args,$curr);
-        // var_dump($trans['net']); die();
-        $sales = $trans['sales'];
-        $trans_menus = $this->menu_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-        $trans_charges = $this->charges_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-        $trans_discounts = $this->discounts_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-        $tax_disc = $trans_discounts['tax_disc_total'];
-        $no_tax_disc = $trans_discounts['no_tax_disc_total'];
-        $trans_local_tax = $this->local_tax_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-        $trans_tax = $this->tax_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-        $trans_no_tax = $this->no_tax_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-        $trans_zero_rated = $this->zero_rated_sales($sales['settled']['ids'],$curr,$post['branch_code']);
-        $payments = $this->payment_sales($sales['settled']['ids'],$curr,$post['branch_code']);
+        $cats = json_decode($zread->menu_categories,true);
+        $sub_cats = json_decode($zread->sub_cats,true);
+        $food_type = json_decode($zread->food_type,true);
+        $menus = json_decode($zread->menus,true);
+        $menu_trans_type = json_decode($zread->menu_trans_type,true);
+        $menu_total = $zread->menu_total;
+        $total_qty = $zread->menu_total_qty;
 
-        $gross = $trans_menus['gross']; 
-        $net = $trans['net'];
-        $charges = $trans_charges['total']; 
-        $discounts = $trans_discounts['total']; 
-        $local_tax = $trans_local_tax['total'];
-        $ewt1_count = $trans['ewt1_count'];
-        $ewt2_count = $trans['ewt2_count'];
-        $ewt5_count = $trans['ewt5_count'];
-        $ewt = 0;
-        $ewt = $ewt1_count + $ewt2_count + $ewt5_count;
-        $less_vat = (($gross+$charges+$local_tax) - $discounts) - $ewt - $net;
-        if($less_vat < 0)
-            $less_vat = 0;
-        $tax = $trans_tax['total'];
-        $no_tax = $trans_no_tax['total'];
-        $zero_rated = $trans_zero_rated['total'];
-        $no_tax -= $zero_rated;
-        update_load(55);
-        $cats = $trans_menus['cats'];                 
-        $menus = $trans_menus['menus'];
-        $menu_total = $trans_menus['menu_total'];
-        $total_qty = $trans_menus['total_qty'];
-        $menu_trans_type = $trans_menus['menu_trans_type'];
+        $modifiers = json_decode($zread->modifiers,true);
+        $sub_modifiers = json_decode($zread->sub_modifiers,true);
         update_load(60);
         usort($cats, function($a, $b) {
             return $b['amount'] - $a['amount'];
@@ -17305,7 +17527,7 @@ class Prints extends CI_Controller {
                             $pdf->Cell(40, 0, '', '', 0, 'R');
                             $pdf->ln();
 
-                            foreach ($trans_menus['mods'] as $mnu_id => $val) {
+                            foreach ($modifiers as $mnu_id => $val) {
                                 $where = array();
                                 $mdetails = "";
                                 $allmodqty = 0;
@@ -17330,7 +17552,7 @@ class Prints extends CI_Controller {
                                     $pdf->Cell(40, 0, num($val['total_amt']), '', 0, 'R');
                                     $pdf->Cell(40, 0, '', '', 0, 'R');
                                     $pdf->ln();
-                                    foreach($trans_menus['submods'] as $m_id => $mval){
+                                    foreach($submodifiers as $m_id => $mval){
                                         if($val['mod_id'] == $m_id){
                                             foreach ($mval as $sub_id => $sval) {
                                                 $pdf->Cell(60, 0, '&nbsp;&nbsp;&nbsp;'.substr($sval['name'],0,12), '', 0, 'L');
@@ -17360,7 +17582,7 @@ class Prints extends CI_Controller {
                             $pdf->Cell(40, 0, num($res['amount']), '', 0, 'R');
                             $pdf->ln();
 
-                            foreach ($trans_menus['mods'] as $mnu_id => $val) {
+                            foreach ($modifiers as $mnu_id => $val) {
                                 if($mnu_id == $res['menu_id']){
 
                                         $where = array('mod_id'=>$val['mod_id']);
@@ -17371,7 +17593,7 @@ class Prints extends CI_Controller {
                                         $pdf->Cell(40, 0, num($val['total_amt']), '', 0, 'R');
                                         $pdf->ln();
 
-                                        foreach($trans_menus['submods'] as $m_id => $mval){
+                                        foreach($submodifiers as $m_id => $mval){
 
                                             if($mod_id == $m_id){
 
@@ -17394,16 +17616,16 @@ class Prints extends CI_Controller {
             }
         }  
 
+        $pdf->ln(15);
         $pdf->SetLineStyle(array('width' => 0.5, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => 'black'));
         $pdf->SetFont('helvetica', 'B', 10);
         $pdf->Cell(180, 0, 'SUBCATEGORIES', 'B', 0, 'L');         
         $pdf->ln(); 
         $pdf->SetFont('helvetica', '', 9);
 
-        $subcats = $trans_menus['sub_cats'];
         $qty = 0;
         $total = 0;
-        foreach ($subcats as $id => $val) {
+        foreach ($sub_cats as $id => $val) {
             // $sheet->getCell('A'.$rc)->setValue($val['name']);
             // $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
             // $sheet->getCell('B'.$rc)->setValue($val['amount']);
@@ -17424,10 +17646,10 @@ class Prints extends CI_Controller {
             $pdf->ln(); 
             $pdf->SetFont('helvetica', '', 9);
 
-            $subcats = $trans_menus['food_type'];
+            // $subcats = $trans_menus['food_type'];
             $qty = 0;
             $total = 0;
-            foreach ($subcats as $id => $val) {
+            foreach ($food_type as $id => $val) {
                 $pdf->Cell(90, 0, $val['name'], '', 0, 'L');
                 $pdf->Cell(90, 0, num($val['amount']), '', 0, 'R');
                 // $pdf->Cell(40, 0, num($ca['amount']), '', 0, 'R');
@@ -17439,50 +17661,50 @@ class Prints extends CI_Controller {
         $pdf->SetFont('helvetica', 'B', 10);
 
         $pdf->Cell(90, 0, 'GROSS SALES', '', 0, 'L');
-        $pdf->Cell(90, 0, num($gross), '', 0, 'R');
+        $pdf->Cell(90, 0, num($zread->net_sales), '', 0, 'R');
         $pdf->ln();
         
         
 
-        $txt = num($charges);
-        if($charges > 0)
-            $txt = "(".num($charges,2).")";
-        $net_no_adds = $net-$charges-$local_tax;
+        $txt = num($zread->total_charges);
+        if($zread->total_charges > 0)
+            $txt = "(".num($txt,2).")";
+        
         $pdf->Cell(90, 0, 'Charges', '', 0, 'L');
         $pdf->Cell(90, 0, $txt, '', 0, 'R');
         $pdf->ln(); 
     
 
-        $txt = num($local_tax);
-        if($local_tax > 0)
-            $txt = "(".$local_tax.")";
+        $txt = num($zread->local_tax);
+        if($zread->local_tax > 0)
+            $txt = "(".$txt.")";
         $pdf->Cell(90, 0, 'Local Tax', '', 0, 'L');
         $pdf->Cell(90, 0, $txt, '', 0, 'R');
         $pdf->ln(); 
 
         $pdf->Cell(90, 0, 'LESS Discounts', '', 0, 'L');
-        $pdf->Cell(90, 0, '-'.num($discounts), '', 0, 'R');
+        $pdf->Cell(90, 0, '-'.num($zread->total_discount), '', 0, 'R');
         $pdf->ln();
 
         $pdf->Cell(90, 0, 'LESS VAT', '', 0, 'L');
-        $pdf->Cell(90, 0, '-'.num($less_vat), '', 0, 'R');
+        $pdf->Cell(90, 0, '-'.num($zread->sc_pwd_vat_exempt), '', 0, 'R');
         $pdf->ln();
 
         if(EWT_DISCOUNT){
             $pdf->Cell(90, 0, substrwords('LESS EWT 1%',23,""), '', 0, 'L');
-            $pdf->Cell(90, 0, '-'.num(numInt($ewt1_count)), '', 0, 'R');
+            $pdf->Cell(90, 0, '-'.num(numInt($zread->ewt1)), '', 0, 'R');
             $pdf->ln();
             $pdf->Cell(90, 0, substrwords('LESS EWT 2%',23,""), '', 0, 'L');
-            $pdf->Cell(90, 0, '-'.num(numInt($ewt2_count)), '', 0, 'R');
+            $pdf->Cell(90, 0, '-'.num(numInt($zread->ewt2)), '', 0, 'R');
             $pdf->ln();
             $pdf->Cell(90, 0, substrwords('LESS EWT 5%',23,""), '', 0, 'L');
-            $pdf->Cell(90, 0, '-'.num(numInt($ewt5_count)), '', 0, 'R');
+            $pdf->Cell(90, 0, '-'.num(numInt($zread->ewt5)), '', 0, 'R');
             $pdf->ln();
         }
 
-        $net_no_adds = $net-$charges-$local_tax;
+        // $net_no_adds = $net-$charges-$local_tax;
         $pdf->Cell(90, 0, 'TOTAL SALES', '', 0, 'L');
-        $pdf->Cell(90, 0, num($net), '', 0, 'R');
+        $pdf->Cell(90, 0, num($zread->total_sales), '', 0, 'R');
         // $pdf->Cell(40, 0, num($ca['amount']), '', 0, 'R');
         $pdf->ln(); 
 
@@ -18467,6 +18689,7 @@ class Prints extends CI_Controller {
                     $jsn_type[$code]['amount'] = $t->amount;
                     $jsn_type[$code]['qty'] = $t->qty;
                     $jsn_type[$code]['cat_id'] = $t->cat_id;
+                    $jsn_type[$code]['code'] = $t->code;
                 }else{
                     $jsn_type[$code]['amount'] += $t->amount;
                     $jsn_type[$code]['qty'] += $t->qty;
@@ -18546,7 +18769,505 @@ class Prints extends CI_Controller {
         
         $zread->sub_modifiers =  json_encode($jsn_type);
 
+        $jsn_type = array();
+        $codes = array();
+        foreach($zread_jsn as $jsn){
+            $typ = $jsn->notax_breakdown != '' ? json_decode($jsn->notax_breakdown) : array(); 
+            
+            foreach($typ as $code => $t1){
+                foreach($t1 as $t){
+                    if(!in_array($t->name, $codes)){
+                        $codes[] = $t->name;
+
+                        $jsn_type[$code][$t->name] =  array('name'=>$t->name,'amount'=>$t->amount,'qty'=>$t->qty,'disc_rate'=>$t->disc_rate);
+                        
+                    }
+                    else{
+                        $jsn_type[$code][$t->name]['amount'] += $t->amount;
+                        $jsn_type[$code][$t->name]['qty'] += $t->qty;
+                    }
+                }
+                
+            }
+        }
+        
+        $zread->notax_breakdown =  json_encode($jsn_type);
+
+        $jsn_type = array();
+        $codes = array();
+        foreach($zread_jsn as $jsn){
+            $typ = $jsn->food_type != '' ? json_decode($jsn->food_type) : array(); 
+            
+            foreach($typ as $code => $t){
+                    if(!in_array($code, $codes)){
+                        $codes[] = $code;
+
+                        $jsn_type[$code]['name'] = $t->name;
+                        $jsn_type[$code]['amount'] = $t->amount;
+                        $jsn_type[$code]['qty'] = $t->qty;
+                    }else{
+                        $jsn_type[$code]['amount'] += $t->amount;
+                        $jsn_type[$code]['qty'] += $t->qty;
+                    }                
+            }
+        }
+        
+        $zread->food_type =  json_encode($jsn_type);
+
         return $zread;
+    }
+    public function merchandise_rep($asJson=false,$asReturn=false){
+        $print_str = $this->print_header();
+        $this->load->model("dine/reports_model");
+        $user = $this->session->userdata('user');
+        $time = $this->site_model->get_db_now();
+        $post = $this->set_post();
+        $curr = $this->search_current();
+        $trans = $this->trans_sales($post['args'],$curr);
+        // echo "<pre>".print_r($post['date'])."</pre>";die();
+        $sales = $trans['sales'];
+        $from = date2SqlDateTime($post['date']." 00:00:01");        
+        $to = date2SqlDateTime($post['date']." 23:59:59");
+        $trans =  $this->reports_model->get_bad_order_rep($from, $to);  
+
+        $title_name = "MERCHANDISE RETURNS REPORT";
+        $print_str .= align_center($title_name,PAPER_WIDTH," ")."\r\n";
+        $print_str .= align_center("TERMINAL ".$post['terminal'],PAPER_WIDTH," ")."\r\n";
+        $print_str .= append_chars('Printed On','right',11," ").append_chars(": ".date2SqlDateTime($time),'right',19," ")."\r\n";
+        $print_str .= append_chars('Printed BY','right',11," ").append_chars(": ".$user['full_name'],'right',19," ")."\r\n";
+        $print_str .= PAPER_LINE."\r\n";
+        $print_str .= align_center(sql2Date($post['date']),38," ")."\r\n";
+        if($post['employee'] != "All")
+            $print_str .= align_center($post['employee'],38," ")."\r\n";
+
+        // $print_str .= append_chars(substrwords('SKU MENU NAME SRP LO BM  TOTAL',100,""),"right",PAPER_TOTAL_COL_1," ")."\r\n";
+        $print_str .= append_chars('SKU',"left",3,"").append_chars('Menu Name',"left",12," ").append_chars('Price',"",13," ").append_chars('LO',"",3," ").append_chars('BM',"",3," ").append_chars('Total',"",6," ")."\r\n";
+        $t_gross = 0;
+        $all_total = 0;
+        $gtotal = 0;
+        $tot_qty1 = 0;
+        $tot_qty2 = 0;
+        $tot_srp = 0;
+        $tot_srp1 = 0;
+        $tot_srp2 = 0;
+        $g_tot = 0;
+        $gtot_all1 = 0;
+        $gtot_all2 = 0;
+        $tot_all1 = 0;
+        $tot_all2 = 0;
+        if(count($trans) > 0){
+            foreach ($trans as $v) {
+                $allqty = $qty1 = $qty2 = 0; 
+                $print_str .= align_center($v->menu_code,3,"");
+                $print_str .= align_center(substrwords($v->menu_name,20,""),18," ");
+                // $print_str .= append_chars($v->menu_code,"left",3," ");
+                // $print_str .= append_chars(substrwords($v->menu_name,20,""),"left",0," ");
+                $print_str .= append_chars(num($v->srp,2),"",6," ");
+                // $print_str .= align_center(num($v->srp,2),7," ");
+                if($v->merch_type == 1){
+                    $print_str .= append_chars(abs($v->qty),"",3," ");
+                    $print_str .= append_chars(0,"",3," ");
+                        // $print_str .= align_center(abs($v->qty),4," ");
+                        // $print_str .= align_center(0,4," ");
+                    $tot_qty1 += $v->qty;
+                    $tot_srp1 += $v->srp;
+                    $qty1 = $v->qty;
+                }else{
+                    $print_str .= append_chars(0,"",3," ");
+                    $print_str .= append_chars(abs($v->qty),"",3," ");
+                        // $print_str .= align_center(0,4," ");
+                        // $print_str .= align_center(abs($v->qty),4," ");
+                    $tot_qty2 += $v->qty;
+                    $tot_srp2 += $v->srp;
+                    $qty2 = $v->qty;
+                }
+                // $all_total = $v->srp *($qty1 + $qty2);
+                $allqty = $qty1 + $qty2;
+                $tot_all2 = $v->srp * $qty2;
+                $tot_all1 = $v->srp * $qty1;
+                // $tot_all2 = $v->srp * $qty2;
+                $print_str .= append_chars(abs($allqty),"left",5," ")."\r\n";
+                // $print_str .= "\r\n";
+                $tot_srp += $v->srp;
+                // $g_tot += $all_total;
+                $g_tot += $allqty;
+                $gtot_all1 += $tot_all1;
+                $gtot_all2 += $tot_all2;
+            }
+             $print_str .= PAPER_LINE."\r\n";
+             $all_total = $v->srp *($qty1 + $qty2);
+             $print_str .= append_chars('TOTAL',"right",21," ");
+             // $print_str .= align_center(num($tot_srp,2),5," ");
+             // $print_str .= align_center(abs($tot_qty1),5," ");
+             // $print_str .= align_center(abs($tot_qty2),5," ")."\r\n";
+             $print_str .= append_chars(num($tot_srp,2),"",3," ");
+             $print_str .= append_chars(abs($tot_qty1),"",4," ");
+             $print_str .= append_chars(abs($tot_qty2),"",4," ");
+             $print_str .= append_chars(abs($g_tot),"left",4," ");
+             $print_str .= "\r\n";
+             $print_str .= "\r\n";
+             $print_str .= append_chars('Total LO',"right",18," ");
+             $print_str .= append_chars(num(abs($gtot_all1),2),"right",18," ")."\r\n";
+             $print_str .= append_chars('Total BM',"right",18," ");
+             $print_str .= append_chars(num(abs($gtot_all2),2),"right",18," ")."\r\n";
+             $print_str .= append_chars('-------------------------',"right",18," ")."\r\n";
+             $gtotal = $gtot_all1 + $gtot_all2;
+             $print_str .= append_chars('G.Total',"right",18," ");
+             $print_str .= append_chars(num(abs($gtotal),2),"right",18," ")."\r\n";
+        }
+        else{
+            $print_str .= append_chars(substrwords("No Merchandise Return Found.",PAPER_RD_COL_1,""),"right",18," ").align_center('',5," ")."\r\n";
+        }
+        
+
+        if(PRINT_VERSION && PRINT_VERSION == 'V2'){
+            $this->do_print_v2($print_str,$asJson);  
+        }else if(PRINT_VERSION && PRINT_VERSION == 'V3' && $asJson){
+            echo $this->html_print($print_str);  
+        }else if($asReturn){
+            return $print_str;
+        }else{
+            $this->do_print($print_str,$asJson);
+        }
+        // $this->do_print($print_str,$asJson);
+    }
+    public function mgt_free_report()
+    {
+        $data = $this->syter->spawn('menu_item_sales');        
+        $data['page_title'] = fa('fa-money')." MGT Free Report";
+        $data['code'] = mgtFreeRep();
+        $data['add_css'] = array('css/wowdash.css','css/morris/morris.css','css/datepicker/datepicker.css','css/daterangepicker/daterangepicker-bs3.css');
+        $data['add_js'] = array('js/plugins/morris/morris.min.js','js/plugins/datepicker/bootstrap-datepicker.js','js/plugins/daterangepicker/daterangepicker.js');
+        $data['page_no_padding'] = false;
+        $data['sideBarHide'] = false;
+        $data['load_js'] = 'dine/prints';
+        $data['use_js'] = 'mgtSalesJs';
+        $this->load->view('page',$data);
+    }
+    public function mgt_rep_gen()
+    {
+        
+        $user = $this->session->userdata('user');
+        $time = $this->site_model->get_db_now();
+
+        $daterange = $this->input->post("calendar_range");        
+        $dates = explode(" to ",$daterange);
+        $from = date2SqlDateTime($dates[0]);        
+        $to = date2SqlDateTime($dates[1]);  
+
+        // $terminal_id = null;
+        // if(CONSOLIDATOR){
+        //     $terminal_id = $this->input->post("terminal_id");
+        // }     
+            $branch_code = $this->input->post("branch_id");
+
+        // $this->cashier_model->db = $this->load->database('main', TRUE);
+        $args = array();
+
+        $args["trans_sales.trans_ref  IS NOT NULL"] = array('use'=>'where','val'=>null,'third'=>false);
+        $args["trans_sales.inactive = 0"] = array('use'=>'where','val'=>null,'third'=>false);
+        $args["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+        $args["trans_sales.type"] = 'mgtfree';
+        // $args["trans_sales.type = '".MGTPROMO."'"] = array('use'=>'where','val'=>null,'third'=>false);
+        // $args["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+
+        // if(CONSOLIDATOR){
+        //     if($terminal_id != null){
+        //         $args['trans_sales.terminal_id'] = $terminal_id;
+        //     }
+        // }else{
+        //     $args['trans_sales.terminal_id'] = TERMINAL_ID;
+            $args['trans_sales.branch_code'] = $branch_code;
+        // }
+
+        // $post = $this->set_post();
+        // $curr = $this->search_current();
+
+        $args_date["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+
+        $curr = false;
+        $trans = $this->trans_sales($args,$curr);
+        $sales = $trans['sales'];
+        $settled = $sales['settled']['orders'];
+       
+
+         // echo "<pre>", print_r($trans), "</pre>"; die();
+        $this->make->sDiv();
+            $this->make->sTable(array("id"=>"main-tbl", 'class'=>'table reportTBL'));
+                $this->make->sTableHead();
+                    $this->make->sRow();
+                        $this->make->th('Terminal ID');
+                        $this->make->th('Transaction ID');
+                        $this->make->th('Employee Name');
+                        $this->make->th('Employee Number');
+                        // $this->make->th('VAT Sales');
+                        // $this->make->th('VAT');
+                        $this->make->th('Amount');
+                        $this->make->th('Date');
+                        // $this->make->th('Sales (%)');
+                        // $this->make->th('Cost');
+                        // $this->make->th('Cost (%)');
+                        // $this->make->th('Margin');
+                    $this->make->eRow();
+                $this->make->eTableHead();
+                $this->make->sTableBody();
+                    foreach ($settled as $id => $vals) {
+                        
+                            // $print_str .=
+                            //      append_chars($ca['name'],'right',18," ")
+                            //     .append_chars(num($ca['qty']),'right',10," ")
+                            //     .append_chars(num($ca['amount']).'','left',10," ")."\r\n";
+                            // $print_str .= append_chars($ca['name'],"right",PAPER_RD_COL_1," ").align_center(num($ca['qty']),PAPER_RD_COL_2," ")
+                            //     .append_chars(num($ca['amount']).'',"left",9," ")."\r\n";
+                            // $print_str .= PAPER_LINE."\r\n";
+                            // if(CONSOLIDATOR){
+                            //     $this->site_model->db = $this->load->database('main', TRUE);
+                            // }
+
+                            $where = array('sales_id'=>$vals->sales_id,'field_name'=>'Employee Name');
+                            $dets1 = $this->site_model->get_details($where,'trans_sales_payment_fields');
+
+                            $where = array('sales_id'=>$vals->sales_id,'field_name'=>'Employee Number');
+                            $dets2 = $this->site_model->get_details($where,'trans_sales_payment_fields');
+
+
+                            $this->make->sRow(array("style"=>""));
+                                $this->make->td($vals->pos_id);
+                                $this->make->td($vals->sales_id);
+                                if($dets1){
+                                    $this->make->td($dets1[0]->value);
+                                }else{
+                                    $this->make->td("");
+                                }
+                                if($dets2){
+                                    $this->make->td($dets2[0]->value);
+                                }else{
+                                    $this->make->td("");
+                                }
+                                $this->make->td(num($vals->total_paid), array("style"=>"text-align:right"));                            
+                                // $this->make->td(num($res->vat_sales), array("style"=>"text-align:right"));                            
+                                // $this->make->td(num($res->vat), array("style"=>"text-align:right"));                            
+                                $this->make->td(sql2Date($vals->datetime), array("style"=>"text-align:left"));                            
+                            $this->make->eRow();
+
+
+                    }
+                $this->make->eTableBody();
+            $this->make->eTable();
+        $this->make->eDiv();
+
+        update_load(100);
+        $code = $this->make->code();
+        $json['code'] = $code;        
+        $json['tbl_vals'] = $trans;
+        $json['dates'] = $this->input->post('calendar_range');
+        echo json_encode($json);
+    }
+
+    public function mgt_rep_gen_excel(){
+        $this->load->library('Excel');
+        $sheet = $this->excel->getActiveSheet();
+
+        // $terminal_id = null;
+        // if(CONSOLIDATOR){
+        //     if($_GET['terminal_id']){
+        //         $terminal_id = $_GET['terminal_id'];
+        //     }
+        // }
+                $branch_code = $_GET['branch_id'];
+
+        $daterange = $_GET['calendar_range'];        
+        $dates = explode(" to ",$daterange);
+        // $from = date2SqlDateTime($dates[0]);
+        // $to = date2SqlDateTime($dates[1]);
+        $from = date2SqlDateTime($dates[0]);        
+        $to = date2SqlDateTime($dates[1]); 
+
+        $args = array();
+        $args["trans_sales.trans_ref  IS NOT NULL"] = array('use'=>'where','val'=>null,'third'=>false);
+        $args["trans_sales.inactive = 0"] = array('use'=>'where','val'=>null,'third'=>false);
+        $args["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+        $args["trans_sales.type"] = 'mgtfree';
+        // $args["trans_sales.type = '".MGTPROMO."'"] = array('use'=>'where','val'=>null,'third'=>false);
+        // $args["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+
+        // if(CONSOLIDATOR){
+        //     if($terminal_id != null){
+        //         $args['trans_sales.terminal_id'] = $terminal_id;
+        //     }
+        // }else{
+        //     $args['trans_sales.terminal_id'] = TERMINAL_ID;
+        // }
+            $args['trans_sales.branch_code'] = $branch_code;
+
+        $args_date["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
+
+        $ddate = sql2Date($dates[0]);
+        $filename = 'MGT Free Report '.$ddate;
+        $rc=1;
+        #GET VALUES
+            start_load(0);
+            // $post = $this->set_post($_GET['calendar_range']);
+            $curr = false;
+            update_load(10);
+            $trans = $this->trans_sales($args,$curr);
+            $sales = $trans['sales'];
+            $settled = $sales['settled']['orders2'];
+            
+            update_load(50);
+           
+            update_load(80);
+        $styleHeaderCell = array(
+            'borders' => array(
+                'allborders' => array(
+                    'style' => PHPExcel_Style_Border::BORDER_THIN
+                )
+            ),
+            'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => array('rgb' => '3C8DBC')
+            ),
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 14,
+                'color' => array('rgb' => 'FFFFFF'),
+            )
+        );
+        $styleNum = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_RIGHT,
+            ),
+        );
+        $styleTxt = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+            ),
+        );
+        $styleTitle = array(
+            'alignment' => array(
+                                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+            ),
+            'font' => array(
+                'bold' => true,
+                'size' => 16,
+            )
+        );
+        $styleNumC = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_RIGHT,
+            ),
+            'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => array('rgb' => 'f5f755')
+            ),
+        );
+        $styleTxtC = array(
+            'alignment' => array(
+                            'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_LEFT,
+            ),
+            'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'color' => array('rgb' => 'f5f755')
+            ),
+        );
+        
+        $headers = array('Terminal ID','Transaction ID','Employee Name','Employee Number','Amount','Date');
+        $sheet->getColumnDimension('A')->setWidth(20);
+        $sheet->getColumnDimension('B')->setWidth(30);
+        $sheet->getColumnDimension('C')->setWidth(30);
+        $sheet->getColumnDimension('D')->setWidth(30);
+        $sheet->getColumnDimension('E')->setWidth(30);
+        $sheet->getColumnDimension('F')->setWidth(30);
+        // $sheet->getColumnDimension('D')->setWidth(20);
+        // $sheet->getColumnDimension('E')->setWidth(20);
+        // $sheet->getColumnDimension('F')->setWidth(20);
+        // $sheet->getColumnDimension('G')->setWidth(20);
+        // $sheet->getColumnDimension('H')->setWidth(20);
+        // $sheet->getColumnDimension('I')->setWidth(20);
+
+
+        $sheet->mergeCells('A'.$rc.':C'.$rc);
+        $sheet->getCell('A'.$rc)->setValue('MGT Free Report');
+        $sheet->getStyle('A'.$rc)->applyFromArray($styleTitle);
+        $rc++;
+
+        if($branch_code != ''){
+            $sheet->mergeCells('A'.$rc.':C'.$rc);
+            $sheet->getCell('A'.$rc)->setValue($branch_code);
+            $sheet->getStyle('A'.$rc)->applyFromArray($styleTitle);
+            $rc++;
+        }
+        
+        $dates = explode(" to ",$_GET['calendar_range']);
+        $from = sql2DateTime($dates[0]);
+        $to = sql2DateTime($dates[1]);
+        $sheet->getCell('A'.$rc)->setValue('Date From: '.$from);
+        $sheet->mergeCells('A'.$rc.':C'.$rc);
+        $rc++;
+
+        $sheet->getCell('A'.$rc)->setValue('Date To: '.$to);
+        $sheet->mergeCells('A'.$rc.':C'.$rc);
+        $rc++;
+        $col = 'A';
+        foreach ($headers as $txt) {
+            $sheet->getCell($col.$rc)->setValue($txt);
+            $sheet->getStyle($col.$rc)->applyFromArray($styleHeaderCell);
+            $col++;
+        }
+
+        $rc++;
+
+        foreach ($settled as $ids => $vals) {
+            $sheet->getCell('A'.$rc)->setValue($vals->pos_id);
+            $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
+            $sheet->getCell('B'.$rc)->setValue($vals->sales_id);
+            $sheet->getStyle('B'.$rc)->applyFromArray($styleTxt);
+
+             // if(CONSOLIDATOR){
+             //                    $this->site_model->db = $this->load->database('main', TRUE);
+             //                }
+
+            $where = array('sales_id'=>$vals->sales_id,'field_name'=>'Employee Name');
+            $dets1 = $this->site_model->get_details($where,'trans_sales_payment_fields');
+
+            $where = array('sales_id'=>$vals->sales_id,'field_name'=>'Employee Number');
+            $dets2 = $this->site_model->get_details($where,'trans_sales_payment_fields');
+
+            if($dets1){
+                $sheet->getCell('C'.$rc)->setValue($dets1[0]->value);
+                $sheet->getStyle('C'.$rc)->applyFromArray($styleTxt);
+            }else{
+                $sheet->getCell('C'.$rc)->setValue("");
+                $sheet->getStyle('C'.$rc)->applyFromArray($styleTxt);
+            }
+            if($dets2){
+                $sheet->getCell('D'.$rc)->setValue($dets2[0]->value);
+                $sheet->getStyle('D'.$rc)->applyFromArray($styleTxt);
+            }else{
+                $sheet->getCell('D'.$rc)->setValue("");
+                $sheet->getStyle('D'.$rc)->applyFromArray($styleTxt);
+            }
+
+            $sheet->getCell('E'.$rc)->setValue($vals->total_paid);
+            $sheet->getStyle('E'.$rc)->applyFromArray($styleNum);
+            $sheet->getCell('F'.$rc)->setValue(sql2Date($vals->datetime));
+            $sheet->getStyle('F'.$rc)->applyFromArray($styleTxt);
+            $rc++;
+            
+        }
+        $rc++;
+       
+        
+        update_load(100);
+        ob_end_clean();
+        header('Content-type: application/vnd.ms-excel');
+        header('Content-Disposition: attachment;filename="'.$filename.'.xls"');
+        header('Cache-Control: max-age=0');
+        $objWriter = PHPExcel_IOFactory::createWriter($this->excel, 'Excel2007');
+        $objWriter->save('php://output');
     }
    
 }

@@ -9,11 +9,11 @@ $active_record = TRUE;
 
 $db['default']['hostname'] = 'localhost';
 
-$db['default']['username'] = 'point17_llaollao_user';
+$db['default']['username'] = 'root';
 
-$db['default']['password'] = 'a*,.%Skz2v^-';
+$db['default']['password'] = '';
 
-$db['default']['database'] = 'point17_llaollao_hq';
+$db['default']['database'] = 'fb_hq';
 
 // $db['default']['hostname'] = '209.182.194.217';
 

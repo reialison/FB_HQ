@@ -8,7 +8,8 @@
 
 
 
-	define('BRANCH_CODE',				'LLAOLLAO_BGC');
+	define('BRANCH_CODE',				'FRENCHBAKER_SMMOA');
+	define('BRANCH_HEADER', 'THE FRENCH BAKER');
 
 	define('TERMINAL_ID',				'1');
 

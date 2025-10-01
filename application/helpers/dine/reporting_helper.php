@@ -1125,3 +1125,242 @@ function transiteRepPage(){
 	$CI->make->eDivRow();
 	return $CI->make->code();
 }
+function BadOrderRep($list = null){
+	$CI =& get_instance();
+	$CI->make->sDivRow();
+		$CI->make->sDivCol();
+			$CI->make->sBox('primary');
+				$CI->make->sBoxBody();
+					$CI->make->sDivRow(array('style'=>'display: flex;align-items: center;'));
+						$CI->make->sDivCol(4);
+							// $CI->make->input('Date & Time Range','calendar_range',null,null,array('class'=>'rOkay daterangepicker ','style'=>'position:initial;'),fa('fa-calendar'));
+							$CI->make->date('Date','calendar_range',date('m/d/Y'),null,array('class'=>'rOkay','style'=>'position:initial;'),null,fa('fa-calendar'));
+						$CI->make->eDivCol();
+						$CI->make->sDivCol(3);
+								$CI->make->branchesDrop('Branch','branch_id',null,'Select Branch');
+								// $CI->make->userDrop('User','user',null,null);
+						$CI->make->eDivCol();
+						$CI->make->sDivCol(4);
+							$CI->make->button(fa('fa-refresh').' Generate',array('id'=>'gen-rep','class'=>'btn rounded-pill btn-primary-100 text-primary-600 radius-8 px-20 py-11 btn rounded-pill btn-primary-100 text-primary-600 radius-8 px-20 py-11 btn btn-default '));
+						$CI->make->eDivCol();
+                	$CI->make->eDivRow();
+       //          	if(CONSOLIDATOR){
+	      //           	$CI->make->sDivRow();
+							// $CI->make->sDivCol(4);							
+							// 	$CI->make->terminalDrop('Terminal','terminal_id',"",null,array('class'=>'','style'=>'position:initial'));
+							// $CI->make->eDivCol();
+	      //           	$CI->make->eDivRow();
+       //          	}else{
+                		// $CI->make->sDivRow();
+							// $CI->make->hidden('terminal_id',TERMINAL_ID);
+	                	// $CI->make->eDivRow();
+                	// }
+				$CI->make->eBoxBody();
+			$CI->make->eBox();
+		$CI->make->eDivCol();
+	$CI->make->eDivRow();
+	$CI->make->sDivRow();
+		$CI->make->sDivCol();
+			$CI->make->sBox('default',array('class'=>'box-solid'));
+				$CI->make->sBoxHead();					
+					$CI->make->sDivCol(4);
+						// $CI->make->input("","search",null,"Search...",array("id"=>"search"),fa("fa-search"));
+					$CI->make->eDivCol();
+					$CI->make->sDiv(array('class'=>'btn-group pull-right','role'=>'group','style'=>'margin-top:10px;margin-right:10px;margin-bottom:10px;'));
+						// $CI->make->button(fa('fa-print').' PDF',array('id'=>'pdf-btn'),'warning');
+						$CI->make->button(fa('fa-print').' PDF',array('id'=>'tcpdf-btn'),'warning');
+						$CI->make->button(fa('fa-file-excel-o').' Excel',array('id'=>'excel-btn'),'success');
+						// $CI->make->button(fa('fa-print').' Receipt Print',array('id'=>'receipt-btn'),'danger');
+					$CI->make->eDiv();
+					
+					$CI->make->sDiv(array('class'=>'btn-group pull-right','role'=>'group','style'=>'margin-top:10px;margin-right:10px;margin-bottom:10px;'));
+						$CI->make->button(fa('fa-table fa-lg'),array('id'=>'view-list','class'=>'listyle-btns'));
+						$CI->make->button(fa('fa-bar-chart fa-lg'),array('id'=>'view-grid','class'=>'listyle-btns'));
+					$CI->make->eDiv();
+
+				$CI->make->eBoxHead();
+				$CI->make->sBoxBody(array('class'=>'bg-gray','style'=>'min-height:50px;'));
+					
+					$CI->make->sBox('solid',array('id'=>'print-box'));
+					    $CI->make->sBoxBody(array('class'=>'no-padding'));
+					        $CI->make->sDivRow();
+					            $CI->make->sDivCol(12);
+									$CI->make->sDiv(array('id'=>'print-div'));
+									$CI->make->eDiv();
+					            $CI->make->eDivCol();
+					        $CI->make->eDivRow();
+					    $CI->make->eBoxBody();
+					$CI->make->eBox();
+									
+				$CI->make->eBoxBody();
+			$CI->make->eBox();
+		$CI->make->eDivCol();
+	$CI->make->eDivRow();
+
+	return $CI->make->code();
+}
+function HalfPriceRep($list = null){
+	$CI =& get_instance();
+	$CI->make->sDivRow();
+		$CI->make->sDivCol();
+			$CI->make->sBox('primary');
+				$CI->make->sBoxBody();
+					$CI->make->sDivRow(array('style'=>'display: flex;align-items: center;'));
+						$CI->make->sDivCol(4);
+							$CI->make->input('Date & Time Range','calendar_range',null,null,array('class'=>'rOkay daterangepicker ','style'=>'position:initial;'),fa('fa-calendar'));
+						$CI->make->eDivCol();
+						$CI->make->sDivCol(3);
+								$CI->make->branchesDrop('Branch','branch_id',null,'Select Branch');
+								// $CI->make->userDrop('User','user',null,null);
+						$CI->make->eDivCol();
+						$CI->make->sDivCol(4);
+							$CI->make->button(fa('fa-refresh').' Generate',array('id'=>'gen-rep','class'=>'btn rounded-pill btn-primary-100 text-primary-600 radius-8 px-20 py-11 btn rounded-pill btn-primary-100 text-primary-600 radius-8 px-20 py-11 btn btn-default '));
+						$CI->make->eDivCol();
+                	$CI->make->eDivRow();
+       //          	if(CONSOLIDATOR){
+	      //           	$CI->make->sDivRow();
+							// $CI->make->sDivCol(4);							
+							// 	$CI->make->terminalDrop('Terminal','terminal_id',"",null,array('class'=>'','style'=>'position:initial'));
+							// $CI->make->eDivCol();
+	      //           	$CI->make->eDivRow();
+       //          	}else{
+       //          		$CI->make->sDivRow();
+							// $CI->make->hidden('terminal_id',TERMINAL_ID);
+	      //           	$CI->make->eDivRow();
+       //          	}
+				$CI->make->eBoxBody();
+			$CI->make->eBox();
+		$CI->make->eDivCol();
+	$CI->make->eDivRow();
+	$CI->make->sDivRow();
+		$CI->make->sDivCol();
+			$CI->make->sBox('default',array('class'=>'box-solid'));
+				$CI->make->sBoxHead();					
+					$CI->make->sDivCol(4);
+						// $CI->make->input("","search",null,"Search...",array("id"=>"search"),fa("fa-search"));
+					$CI->make->eDivCol();
+					$CI->make->sDiv(array('class'=>'btn-group pull-right','role'=>'group','style'=>'margin-top:10px;margin-right:10px;margin-bottom:10px;'));
+						// $CI->make->button(fa('fa-print').' PDF',array('id'=>'pdf-btn'),'warning');
+						$CI->make->button(fa('fa-print').' PDF',array('id'=>'tcpdf-btn'),'warning');
+						$CI->make->button(fa('fa-file-excel-o').' Excel',array('id'=>'excel-btn'),'success');
+						// $CI->make->button(fa('fa-print').' Receipt Print',array('id'=>'receipt-btn'),'danger');
+					$CI->make->eDiv();
+					
+					$CI->make->sDiv(array('class'=>'btn-group pull-right','role'=>'group','style'=>'margin-top:10px;margin-right:10px;margin-bottom:10px;'));
+						$CI->make->button(fa('fa-table fa-lg'),array('id'=>'view-list','class'=>'listyle-btns'));
+						$CI->make->button(fa('fa-bar-chart fa-lg'),array('id'=>'view-grid','class'=>'listyle-btns'));
+					$CI->make->eDiv();
+
+				$CI->make->eBoxHead();
+				$CI->make->sBoxBody(array('class'=>'bg-gray','style'=>'min-height:50px;'));
+					
+					$CI->make->sBox('solid',array('id'=>'print-box'));
+					    $CI->make->sBoxBody(array('class'=>'no-padding'));
+					        $CI->make->sDivRow();
+					            $CI->make->sDivCol(12);
+									$CI->make->sDiv(array('id'=>'print-div'));
+									$CI->make->eDiv();
+					            $CI->make->eDivCol();
+					        $CI->make->eDivRow();
+					    $CI->make->eBoxBody();
+					$CI->make->eBox();
+									
+				$CI->make->eBoxBody();
+			$CI->make->eBox();
+		$CI->make->eDivCol();
+	$CI->make->eDivRow();
+
+	return $CI->make->code();
+}
+
+function newgcSalesRep($list = null,$gc_brands){
+	$CI =& get_instance();
+	$CI->make->sDivRow();
+		$CI->make->sDivCol();
+			$CI->make->sBox('primary');
+				$CI->make->sBoxBody();
+					$CI->make->sDivRow();
+						$CI->make->sDivCol(4);
+							$CI->make->input('Date & Time Range','calendar_range',null,null,array('class'=>'rOkay daterangepicker','style'=>'position:initial;'),fa('fa-calendar'));
+							// $CI->make->date("Date","date",null,"Select Date",array("class"=>"rOkay"));
+						$CI->make->eDivCol();
+						$CI->make->sDivCol(4);
+							$CI->make->button(fa('fa-refresh').' Generate',array('id'=>'gen-rep','style'=>'margin-top:24px;margin-right:10px;'),'primary');
+							// $CI->make->button(fa('fa-file-excel-o').' Export to Excel',array('id'=>'excel-btn','style'=>'margin-top:24px;'),'success');
+						$CI->make->eDivCol();
+                	$CI->make->eDivRow();
+
+      //           	$CI->make->sDivRow(array('id'=>'category-div'));
+						// $CI->make->sDivCol(4);							
+						// 	$gc_list=array();
+						// 			if(count($gc_brands) > 0){
+						// 				foreach($gc_brands as $gc_type){
+						// 					$gc_list[$gc_type->card_no]=$gc_type->card_no;
+						// 				}
+						// 			}
+									
+
+						// 			$CI->make->select('GC Type','gc-type',$gc_list,null,array());
+						// $CI->make->eDivCol();
+      //           	$CI->make->eDivRow();
+					// $CI->make->sDivRow();
+					// 	$CI->make->sDivCol(2);							
+					// 		 $CI->make->time('Start Time','start_time',null,'Start Time');
+					// 	$CI->make->eDivCol();
+					// 	$CI->make->sDivCol(2);
+					// 		$CI->make->time('End Time','end_time',null,'End Time');
+					// 	$CI->make->eDivCol();
+     //            	$CI->make->eDivRow();
+     //            	$CI->make->sDivRow();
+					// 	$CI->make->sDivCol(4);							
+					// 		$CI->make->reportTypeDrop('Report Type','report_type',null,'Select Type',array("id"=>"report_type", 'class'=>'rOkay'));
+					// 	$CI->make->eDivCol();
+     //            	$CI->make->eDivRow();
+					// $CI->make->sDivRow(array('id'=>'category-div'));
+					// 	$CI->make->sDivCol(4);							
+					// 		$CI->make->menuCategoriesDrop('Category','menu_cat_id',null,'Select Category',array("id"=>"menu_cat_id", 'class'=>'rOkay'));
+					// 	$CI->make->eDivCol();
+     //            	$CI->make->eDivRow();
+				$CI->make->eBoxBody();
+			$CI->make->eBox();
+		$CI->make->eDivCol();
+	$CI->make->eDivRow();
+	$CI->make->sDivRow();
+		$CI->make->sDivCol();
+			$CI->make->sBox('default',array('class'=>'box-solid'));
+				$CI->make->sBoxHead();					
+					// $CI->make->sDivCol(4);
+					// 	$CI->make->input("","search",null,"Search...",array("id"=>"search"),fa("fa-search"));
+					// $CI->make->eDivCol();
+					$CI->make->sDiv(array('class'=>'btn-group pull-right','role'=>'group','style'=>'margin-top:10px;margin-right:10px;margin-bottom:10px;'));
+						// $CI->make->button(fa('fa-print').' PDF',array('id'=>'pdf-btn'),'warning');
+						$CI->make->button(fa('fa-print').' PDF',array('id'=>'tcpdf-btn'),'warning');
+						$CI->make->button(fa('fa-file-excel-o').' Excel',array('id'=>'excel-btn'),'success');
+					$CI->make->eDiv();
+					
+					// $CI->make->sDiv(array('class'=>'btn-group pull-right','role'=>'group','style'=>'margin-top:10px;margin-right:10px;margin-bottom:10px;'));
+					// 	$CI->make->button(fa('fa-table fa-lg'),array('id'=>'view-list','class'=>'listyle-btns'));
+					// 	$CI->make->button(fa('fa-bar-chart fa-lg'),array('id'=>'view-grid','class'=>'listyle-btns'));
+					// $CI->make->eDiv();
+
+				$CI->make->eBoxHead();
+				$CI->make->sBoxBody(array('class'=>'bg-gray','style'=>'min-height:50px;'));
+					
+					$CI->make->sBox('solid',array('id'=>'print-box'));
+					    $CI->make->sBoxBody(array('class'=>'no-padding'));
+					        $CI->make->sDivRow();
+					            $CI->make->sDivCol(12);
+									$CI->make->sDiv(array('id'=>'print-div'));
+									$CI->make->eDiv();
+					            $CI->make->eDivCol();
+					        $CI->make->eDivRow();
+					    $CI->make->eBoxBody();
+					$CI->make->eBox();
+									
+				$CI->make->eBoxBody();
+			$CI->make->eBox();
+		$CI->make->eDivCol();
+	$CI->make->eDivRow();
+
+	return $CI->make->code();
+}

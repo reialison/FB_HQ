@@ -94,6 +94,7 @@ class Migrate extends Reads{
         $this->db->trans_start();
             foreach($chunks as $chunk){
                 $this->db->insert_ignore_batch($tbl_name,$chunk);
+                echo $this->db->last_query();die();
             }
         $this->db->trans_complete();
         // exit;
@@ -108,6 +109,10 @@ class Migrate extends Reads{
 
         if(in_array($tbl_name, array('0_debtor_trans','0_comments','0_voided'))){
             $tbl_id = array($tbl_id,'type');
+        }
+
+        if($tbl_name == 'trans_sales_payments'){
+            $this->update_gc_status($result);
         }
 
         $new_result = $this->object_flat($result,array($tbl_id,'pos_id'));
@@ -997,5 +1002,66 @@ class Migrate extends Reads{
             $this->db->insert('store_zread',$transite);
         }
         
+    }
+
+    function validate_gc(){
+        $gc_code = $this->input->post('gc_code');
+        $error = 0;
+        $msg = '';
+        $amount = 0;
+
+        if($gc_code != ''){
+            $gc = $this->db->where('card_no',$gc_code)->get('gift_cards')->result();
+
+            if($gc && $gc[0]->inactive == 0){
+                $msg = 'Gift checque is valid.';
+                $amount = $gc[0]->amount;
+            }else if($gc && $gc[0]->inactive == 1){
+                $error = 1;
+                $msg = 'Gift checque is already taken.';
+                $amount = $gc[0]->amount;
+            }else{
+                $error = 1;
+                $msg = 'Invalid gift cheque.';
+            }
+        }else{
+            $error = 1;
+            $msg = 'Invalid gift cheque.';
+        }
+
+        echo json_encode(array('error'=>$error,'msg'=>$msg,'amount'=>$amount));
+    }
+
+    // function update_gc_status(){
+    //     $gc_code = $this->input->post('gc_code');
+    //     $status = $this->input->post('status');
+    //     $error = 0;
+    //     $msg = '';
+    //     $amount = 0;
+
+    //     if($gc_code != ''){
+    //         $gc = $this->db->where('card_no',$gc_code)->update('gift_cards',array('inactive'=>$status));
+
+    //         $msg = 'Gift checqued successfully redeeamed.';
+    //     }else{
+    //         $error = 1;
+    //         $msg = 'Invalid gift cheque';
+    //     }
+
+    //     echo json_encode(array('error'=>$error,'msg'=>$msg,'amount'=>$amount));
+    // }
+
+    function update_gc_status($trans_sales_payments=array()){
+        if($trans_sales_payments){
+            foreach($trans_sales_payments as $each){
+                if($each->payment_type == 'gc' && $each->amount > 0){
+                    $item = array('sales_id'=>$each->sales_id,'pos_id'=>$each->pos_id,'branch_code'=>$each->branch_code,'inactive'=>1);
+                    $this->db->where('inactive',0)->where('card_no',$each->reference)->update('gift_cards',$item);
+                }else if($each->payment_type == 'gc' && $each->amount < 0){
+                    $item = array('sales_id'=>0,'pos_id'=>0,'inactive'=>0,'branch_code'=>null);
+                    $this->db->where('inactive',1)->where('card_no',$each->reference)->update('gift_cards',$item);
+                }
+            }
+        }
     }
 }

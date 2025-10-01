@@ -65,6 +65,7 @@ class Admin_model extends CI_Model{
 			$this->db->query('truncate table `trans_sales_menus`');
 			$this->db->query('truncate table `trans_sales_no_tax`');
 			$this->db->query('truncate table `trans_sales_payments`');
+			$this->db->query('truncate table `trans_sales_payment_fields`');
 			$this->db->query('truncate table `trans_sales_tax`');
 			$this->db->query('truncate table `trans_sales_zero_rated`');
 			$this->db->query('truncate table `trans_sales_local_tax`');

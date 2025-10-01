@@ -271,6 +271,9 @@ function menuDetailsLoad($menu=null,$menu_id=null,$branch_code=null){
 				$CI->make->sDivCol(4);
 					$CI->make->brandDbDrop('Brand','brand',iSetObj($menu,'brand'),'Select Brand',array('class'=>'rOkay'));
 				$CI->make->eDivCol();
+				$CI->make->sDivCol(4);
+						$CI->make->foodTypeDrop('Food Type','food_type',iSetObj($menu,'food_type'),null,array('class'=>'rOkay'));
+					$CI->make->eDivCol();
 				if(MENU_OTHER_DESC){
 					$CI->make->sDivCol(4);
 						$CI->make->input('Other Description','menu_other_desc',iSetObj($menu,'menu_other_desc'),'Type Other Desc',array('class'=>''));

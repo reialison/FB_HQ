@@ -124,4 +124,57 @@ class Gift_cards_model extends CI_Model{
 			return 0;
 		}
 	}
+
+	public function new_get_gift_card_brand($id=null,$notAll=false){
+		$this->db->trans_start();
+			$this->db->select('*');
+			$this->db->from('gift_cards');
+			if($id != null)
+				if(is_array($id))
+				{
+					$this->db->where_in('gift_cards.gc_id',$id);
+				}else{
+					$this->db->where('gift_cards.gc_id',$id);
+				}
+			if($notAll){
+				$this->db->where('gift_cards.inactive',0);
+			}
+
+			// $this->db->where('gift_cards.description_id is not null');
+			// $this->db->order_by('gift_cards.description_id asc');
+			$query = $this->db->get();
+			$result = $query->result();
+		$this->db->trans_complete();
+		return $result;
+	}
+	public function new_get_gift_cards_rep_retail($sdate, $edate, $gc_type = "")
+	{
+		$this->db->select("ts.trans_ref as ref,ts.branch_code,tsm.amount,tsm.reference",false);
+		$this->db->from("trans_sales_payments tsm");
+		$this->db->join("trans_sales ts", "ts.sales_id = tsm.sales_id && ts.pos_id = tsm.pos_id && ts.branch_code = tsm.branch_code");
+		// $this->db->join("(select * from gift_cards group by description_id,brand_id) gc", "gc.description_id = tsm.description_id",'left');
+		// if($gc_type != "")
+		// {
+		// 	$this->db->where("tsm.card_no", $gc_type);					
+		// }
+		$this->db->where("ts.datetime >=", $sdate);		
+		$this->db->where("ts.datetime <", $edate);
+		$this->db->where("ts.type_id", 10);
+		$this->db->where("ts.trans_ref is not null");
+ 		$this->db->where("ts.inactive", 0);
+ 		$this->db->where("tsm.payment_type", 'gc');
+ 		// if(HIDECHIT){
+ 		// 	$this->db->where("ts.sales_id NOT IN (SELECT sales_id from trans_gc_payments where payment_type = 'chit')");
+ 		// }
+ 		// if(PRODUCT_TEST){
+ 		// 	$this->db->where("ts.sales_id NOT IN (SELECT sales_id from trans_gc_payments where payment_type = 'producttest')");
+ 		// }
+		// $this->db->group_by("tsm.description_id,ts.trans_ref");		
+		// $this->db->group_by("tsm.card_no");		
+		// $this->db->order_by("tsm.description_id ASC");
+		$q = $this->db->get();
+		$result = $q->result();
+		// echo $this->db->last_query();die();
+		return $result;
+	}
 }

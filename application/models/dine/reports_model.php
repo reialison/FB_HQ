@@ -530,14 +530,14 @@ class Reports_model extends CI_Model{
 
 		return $result ? $result[0]->amount : 0;
 	}
-	public function get_bad_order_rep($sdate, $edate, $terminal_id=null)
+	public function get_bad_order_rep($sdate, $edate, $terminal_id=null,$branch_code=null)
 	{
 		$this->db->select("tbo.*,menu.costing as cost,menu.cost as srp,tbor.qty,tbor.item_id,tbor.merch_type,menu.menu_name,menu.menu_code",false);
 		// $this->db->from("trans_bad_order tbo");
 		$this->db->from("trans_adjustment_menu tbo");
-		$this->db->join("trans_adjustment_menu_details tbor", "tbor.adjustment_id = tbo.adjustment_id ","left");
+		$this->db->join("trans_adjustment_menu_details tbor", "tbor.adjustment_id = tbo.adjustment_id &&  tbor.branch_code = tbo.branch_code && tbor.terminal_id = tbo.terminal_id","left");
 		// $this->db->join("trans_bad_order_details tbor", "tbor.spoil_id = tbo.spoil_id ","left");
-		$this->db->join("menus menu", "tbor.item_id = menu.menu_id ","left");
+		$this->db->join("menus menu", "tbor.item_id = menu.menu_id && tbor.branch_code = menu.branch_code","left");
 		// $this->db->join("members_type mt", "mt.id = cus.member_type_id ","left");
 		// $this->db->join('terminals','ts.terminal_id = terminals.terminal_id',"left");	
 		// $this->db->join('trans_sales_payments tsp','ts.sales_id = tsp.sales_id',"left");	
@@ -548,6 +548,10 @@ class Reports_model extends CI_Model{
 		// $this->db->where("ts.trans_ref is not null");
  		$this->db->where("tbo.type", 5);
  		$this->db->where("tbo.inactive", 0);
+
+ 		if($branch_code != ''){
+ 			$this->db->where("tbo.branch_code", $branch_code);
+ 		}
  		// if(CONSOLIDATOR){
  		// 	if($terminal_id != null){
  		// 		$this->db->where("ts.terminal_id", $terminal_id);
@@ -561,19 +565,19 @@ class Reports_model extends CI_Model{
 		$result = $q->result();
 		return $result;
 	}
-	public function get_half_price_rep($sdate, $edate, $terminal_id=null)
+	public function get_half_price_rep($sdate, $edate, $branch_code=null)
 	{
-		if(CONSOLIDATOR){
+		// if(CONSOLIDATOR){
+		// 		$this->db->select("tsm.*,sum(tsm.qty * tsm.price) as price,sum(tsm.qty) as qty,pd.promo_code,pd.promo_name,menu.menu_name,menu.menu_cat_id,menu.menu_code,ts.datetime as tsdate",false);
+		// 		$this->db->from("trans_sales ts");
+		// 		$this->db->join("trans_sales_menus tsm", "tsm.sales_id = ts.sales_id && tsm.pos_id = ts.terminal_id");
+		// }else{
 				$this->db->select("tsm.*,sum(tsm.qty * tsm.price) as price,sum(tsm.qty) as qty,pd.promo_code,pd.promo_name,menu.menu_name,menu.menu_cat_id,menu.menu_code,ts.datetime as tsdate",false);
 				$this->db->from("trans_sales ts");
-				$this->db->join("trans_sales_menus tsm", "tsm.sales_id = ts.sales_id && tsm.pos_id = ts.terminal_id");
-		}else{
-				$this->db->select("tsm.*,sum(tsm.qty * tsm.price) as price,sum(tsm.qty) as qty,pd.promo_code,pd.promo_name,menu.menu_name,menu.menu_cat_id,menu.menu_code,ts.datetime as tsdate",false);
-				$this->db->from("trans_sales ts");
-				$this->db->join("trans_sales_menus tsm", "tsm.sales_id = ts.sales_id");	
-		}
+				$this->db->join("trans_sales_menus tsm", "tsm.sales_id = ts.sales_id && tsm.pos_id = ts.pos_id && tsm.branch_code = ts.branch_code");	
+		// }
 		$this->db->join("promo_discounts pd", "tsm.promo_id = pd.promo_id ");
-		$this->db->join("menus menu", "tsm.menu_id = menu.menu_id ");
+		$this->db->join("menus menu", "tsm.menu_id = menu.menu_id && tsm.branch_code = menu.branch_code ");
 		// $this->db->join("menus menu", "tbor.item_id = menu.menu_id ","left");
 		
 		
@@ -586,17 +590,60 @@ class Reports_model extends CI_Model{
 		$this->db->where('pd.promo_code', '50PERCENTPROMO');
 		$this->db->where('ts.type', 'takeout');
 		$this->db->where('tsm.promo_id', 2);
- 		if(CONSOLIDATOR){
- 			if($terminal_id != null){
- 				$this->db->where("ts.terminal_id", $terminal_id);
- 			}
- 		}else{
- 			$this->db->where("ts.terminal_id", TERMINAL_ID);
- 		}	
+ 		// if(CONSOLIDATOR){
+ 		// 	if($terminal_id != null){
+ 		// 		$this->db->where("ts.terminal_id", $terminal_id);
+ 				$this->db->where("ts.branch_code", $branch_code);
+ 		// 	}
+ 		// }else{
+ 		// 	$this->db->where("ts.terminal_id", TERMINAL_ID);
+ 		// }	
  		$this->db->group_by("menu.menu_id");
 		$q = $this->db->get();
 		// echo $this->db->last_query();die();
 		$result = $q->result();
+		return $result;
+	}
+
+	public function get_menu_categories($id=null,$branch_code='',$brand=1,$page=0){
+		// die($limit.'sss');
+		$this->db->trans_start();
+			$this->db->select('tsm.menu_id,mc.menu_cat_name,mc.menu_cat_id');
+			// $this->db->from('menu_categories');
+			$this->db->from('trans_sales_menus tsm');
+			$this->db->join("menus menu", "tsm.menu_id = menu.menu_id && tsm.branch_code = menu.branch_code ","left");
+			$this->db->join('menu_categories mc','menu.menu_cat_id=mc.menu_cat_id && menu.branch_code=mc.branch_code');
+			// $this->db->join('promo_discount_items pdi','pdi.item_id=menu.menu_id');
+			$this->db->where('mc.brand',$brand);
+			if($id != null)
+				if(is_array($id))
+				{
+					$this->db->where_in('mc.menu_cat_id',$id);
+				}else{
+					$this->db->where('mc.menu_cat_id',$id);
+				}
+			// if($notAll){
+				$this->db->where('mc.inactive',0);
+			// }
+
+			if($branch_code != ''){
+				$this->db->where('tsm.branch_code',$branch_code);
+			}
+
+			$this->db->order_by('mc.menu_cat_name asc');
+			$this->db->group_by("mc.menu_cat_id");
+			// if($page != 0){
+			// 	if($page == 1){
+	  //               $this->db->limit(MENU_COUNT_BUTTONS,0);
+	  //           }else{
+	  //               $limit = ($page - 1) * MENU_COUNT_BUTTONS;
+	  //               $this->db->limit(MENU_COUNT_BUTTONS,$limit);
+	  //               // $limit = ($cat_page - 1) * 28;
+	  //           }
+			// }
+			$query = $this->db->get();
+			$result = $query->result();
+		$this->db->trans_complete();
 		return $result;
 	}
 }

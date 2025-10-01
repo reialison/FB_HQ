@@ -75,7 +75,7 @@ $nav['dashboard'] = array('title'=>'<i class="icon-speedometer"></i> <span class
 
 		// $pos_promos['promos'] = array('title'=>'Promos','path'=>'settings/promos','exclude'=>0);
 
-// 		$menus['gift_cards'] = array('title'=>'<span class="title">Gift Cheque</span>','path'=>'gift_cards','exclude'=>0);
+		$menus['gift_cards'] = array('title'=>'<span class="title">Gift Cheque</span>','path'=>'gift_cards','exclude'=>0);
 
 		// $pos_promos['coupons'] = array('title'=>'<span class="title">Coupons</span>','path'=>'coupons','exclude'=>0);
 
@@ -116,10 +116,10 @@ $nav['dashboard'] = array('title'=>'<i class="icon-speedometer"></i> <span class
 
 // 	$reps['brand_sales_upload'] = array('title'=>'Brand Sales Upload Report','path'=>'reporting/branch_sales_upload','exclude'=>0);
 
-// 	$reps['discounts_rep'] = array('title'=>'Discounts Report','path'=>'prints/discs_rep','exclude'=>0);
+	$reps['discounts_rep'] = array('title'=>'Discounts Report','path'=>'prints/discs_rep','exclude'=>0);
 	// $reps['dtr_rep'] = array('title'=>'DTR','path'=>'reporting/dtr_rep','exclude'=>0);
 
-// 	$reps['gc_sales_rep'] = array('title'=>'Gift Cheque Sales Report','path'=>'reporting/gc_rep','exclude'=>0);
+	$reps['gc_sales_rep'] = array('title'=>'Gift Cheque Sales Report','path'=>'reporting/new_gc_sales_rep','exclude'=>0);
 
 // 	$reps['menu_sales_rep'] = array('title'=>'Menus Report','path'=>'reporting/menus_rep','exclude'=>0);
 
@@ -134,7 +134,7 @@ $nav['dashboard'] = array('title'=>'<i class="icon-speedometer"></i> <span class
 	// $reps['drawer_count'] = array('title'=>'Drawer Count','path'=>'reports/drawer_count_ui','exclude'=>0);
 
 	// $reps['rep_history'] = array('title'=>'Read History','path'=>'history','exclude'=>0);
-
+	$reps['half_price'] = array('title'=>'Half Price Sales Report','path'=>'reporting/half_price_sales_report','exclude'=>0);
 	$reps['hourly_rep'] = array('title'=>'Hourly Sales','path'=>'reporting/hourly_rep','exclude'=>0);
 
 // 	$reps['menu_sales_rep_hrly'] = array('title'=>'Hourly Menu Report','path'=>'reporting/menus_rep_hourly','exclude'=>0);
@@ -155,9 +155,10 @@ $nav['dashboard'] = array('title'=>'<i class="icon-speedometer"></i> <span class
 
 	// $reps['daily_be'] = array('title'=>'BIR Daily Sales','path'=>'reports/daily_sales_ui','exclude'=>0);
 
-	
+	$reps['mgtfree'] = array('title'=>'MGT Free Report','path'=>'prints/mgt_free_report','exclude'=>0);
       $reps['menu_sales_rep'] = array('title'=>'Menu Item Sales','path'=>'prints/menu_item_sales','exclude'=>0);
        $reps['mod_sales_rep'] = array('title'=>'Menu Modifiers Sales','path'=>'prints/back_mod_sales_rep','exclude'=>0);
+       $reps['merchandise'] = array('title'=>'Merchandise Returns','path'=>'reporting/merchandise_report','exclude'=>0);
 // 	$reps['mom_report'] = array('title'=>'Month to Month','path'=>'reporting/month_to_month_rep','exclude'=>0);
 
 	// $reps['promo_report'] = array('title'=>'Promo Report','path'=>'reporting/promo_rep','exclude'=>0);

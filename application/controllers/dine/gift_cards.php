@@ -17,6 +17,7 @@ class Gift_cards extends CI_Controller {
         $data['code'] = create_rtable('gift','gc_id','gift-tbl',$th,'gift_cards/filter_gift_card',false,'list');
   		$data['load_js'] = 'dine/gift_cards.php';
         $data['use_js'] = 'listFormJs';
+        $data['add_css'] = 'css/wowdash.css';
         $data['page_no_padding'] = true;
         $data['sideBarHide'] = true;
         $this->load->view('page',$data);
@@ -239,7 +240,7 @@ class Gift_cards extends CI_Controller {
                         "amount"        => $sheet[$i]["B"],
                         "description"        => $sheet[$i]["C"],
                         "brand"        => $sheet[$i]["D"],
-                        "branch_code"        => $sheet[$i]["E"],
+                        // "branch_code"        => $sheet[$i]["E"],
                     );
                 }
             }

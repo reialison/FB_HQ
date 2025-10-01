@@ -326,6 +326,10 @@ class Dashboard extends Prints {
         $gt2 = $this->site_model->get_tbl('store_zread',$args2,array(),$join2,true,$select2);
         $lastGT2 = $gt2[0]->true_grand_total;
 
+        if($lastGT2 == 0){
+            $lastGT2 = 1;
+        }
+
         if($lastGT > 0){
             $perc = ($lastGT / $lastGT2) * 100;
             if($lastGT > $lastGT2){
@@ -380,6 +384,10 @@ class Dashboard extends Prints {
         $lastGT2 = $gt2[0]->true_grand_total;
 
         // $perc = ($lastGT / $lastGT2) * 100;
+
+        if($lastGT2 == 0){
+            $lastGT2 = 1;
+        }
 
         if($lastGT > 0){
             $perc = ($lastGT / $lastGT2) * 100;

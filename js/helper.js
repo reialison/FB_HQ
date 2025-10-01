@@ -4,7 +4,7 @@
 	$.extend({
 		loadPage: function(options){
 			var href = window.location.href.split('/');
-			var defaultUrl = href[0]+'//'+href[2]+'/';
+			var defaultUrl = href[0]+'//'+href[2]+'/'+href[3]+'/';
 			var settings = $.extend({
 				loadTxt :  '<center><img src="'+defaultUrl+'img/rotate.gif" width="70"><br>Loading ...</center>',
 				load 	:  true
