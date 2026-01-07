@@ -358,6 +358,9 @@ function DiscRep($list = null){
 						$CI->make->sDivCol(4);
 							$CI->make->input('Date & Time Range','calendar_range',null,null,array('class'=>'rOkay daterangepicker datetimepicker','style'=>'position:initial;'),fa('fa-calendar'));
 						$CI->make->eDivCol();
+						$CI->make->sDivCol(2);							
+							$CI->make->terminalDrop('Terminal','terminal_id',"",null,array('class'=>'','style'=>'position:initial'));
+						$CI->make->eDivCol();
 						$CI->make->sDivCol(4);
 							$CI->make->button(fa('fa-refresh').' Generate',array('id'=>'gen-rep','style'=>'margin-top:24px;margin-right:10px;','class'=>'btn rounded-pill btn-primary-100 text-primary-600 radius-8 px-20 py-11'));
 						$CI->make->eDivCol();
@@ -441,6 +444,9 @@ function SystemSalesBack(){
 							$CI->make->sDivCol(3);
 								$CI->make->branchesDrop('Branch','branch_id',null,'Select Branch');
 								// $CI->make->userDrop('User','user',null,null);
+							$CI->make->eDivCol();
+							$CI->make->sDivCol(2);							
+								$CI->make->terminalDrop('Terminal','terminal_id',"",null,array('class'=>'','style'=>'position:initial'));
 							$CI->make->eDivCol();
 							$CI->make->sDivCol(2);
 								$CI->make->button(fa('fa-search').' Submit',array('style'=>'margin-top:24px;','id'=>'search-btn','class'=>'btn rounded-pill btn-primary-100 text-primary-600 radius-8 px-20 py-11'));
@@ -656,9 +662,9 @@ function mgtFreeRep($list = null){
 						$CI->make->eDivCol();
 						// if(CONSOLIDATOR){
 		    //             	// $CI->make->sDivRow();
-						// 		$CI->make->sDivCol(2);							
-						// 			$CI->make->terminalDrop('Terminal','terminal_id',"",null,array('class'=>'','style'=>'position:initial'));
-						// 		$CI->make->eDivCol();
+								$CI->make->sDivCol(2);							
+									$CI->make->terminalDrop('Terminal','terminal_id',"",null,array('class'=>'','style'=>'position:initial'));
+								$CI->make->eDivCol();
 		    //             	// $CI->make->eDivRow();
 	     //            	}else{
 	     //            		// $CI->make->sDivRow();

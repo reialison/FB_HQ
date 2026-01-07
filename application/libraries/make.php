@@ -1630,7 +1630,7 @@ class Make{
 				if($placeholder != null)
 					$opts[$placeholder] = '';
 				foreach ($results as $res) {
-					$opts[$res->terminal_code] = $res->terminal_id;
+					$opts[$res->terminal_name] = $res->terminal_id;
 				}
 				$str .= $this->select($label,$nameID,$opts,$value,$selectParams);
 			if($this->returnitize($params)) return $str; else $this->code .= $str;

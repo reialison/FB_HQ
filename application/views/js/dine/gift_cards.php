@@ -42,7 +42,10 @@ $(document).ready(function(){
 		$('#gift-tbl').rTable({
 			loadFrom	: 	 'gift_cards/get_gc',
 			noEdit		: 	 true,
-			noAdd		: 	 true,
+			noAdd		: 	 false,
+			add			: 	 function(){
+								goTo('gift_cards/add_gift_card');
+					 		},
 			noBtn1 		:   false,
 			btn1Txt		: 	"<i class='fa fa-upload '></i> Upload",				 				 	
 			btn1 		: 	function(data){
@@ -84,6 +87,8 @@ $(document).ready(function(){
 								});
 								var table = $('#gift-tbl');
 						        var oTable = table.dataTable({
+
+								
 
 						            // Internationalisation. For more info refer to http://datatables.net/manual/i18n
 						            "language": {
@@ -139,6 +144,7 @@ $(document).ready(function(){
 						            // So when dropdowns used the scrollable div should be removed. 
 						            //"dom": "<'row' <'col-md-12'T>><'row'<'col-md-6 col-sm-12'l><'col-md-6 col-sm-12'f>r>t<'row'<'col-md-5 col-sm-12'i><'col-md-7 col-sm-12'p>>",
 						        });
+								
 								// $('#subcategories-tbl').dataTable();
 							 }				 				 	 	
 			});	
@@ -213,24 +219,62 @@ $(document).ready(function(){
 			});
 
 	<?php elseif($use_js == 'giftCardDetailsJs'): ?>
-		$('#save-btn').click(function(){
-			$("#gift_cards_details_form").rOkay({
-				btn_load		: 	$('#save-btn'),
-				btn_load_remove	: 	true,
-				asJson			: 	true,
-				onComplete		:	function(data){
-										// alert(data);
-										rMsg(data.msg,'success');
-									}
+		$('#save-btn').click(function(e){
+			e.preventDefault(); 
+
+			var isValid = true;
+			var errorMsg = [];
+
+			if($('#card_no').val().trim() == '') {
+				errorMsg.push('Card Number is required');
+				isValid = false;
+			}
+			if($('#amount').val().trim() == '') {
+				errorMsg.push('Amount is required');
+				isValid = false;
+			}
+			if($('#description_id').val().trim() == '') {
+				errorMsg.push('Description Code is required');
+				isValid = false;
+			}
+			if($('#brand_id').val().trim() == '') {
+				errorMsg.push('Brand is required');
+				isValid = false;
+			}
+
+			if(!isValid) {
+				rMsg(errorMsg.join(', '), 'error');
+				return false;
+			}
+
+			$.ajax({
+				url: baseUrl + 'gift_cards/gift_cards_details_db',
+				type: 'POST',
+				data: $('#gift_cards_details_form').serialize(),
+				dataType: 'json',
+				beforeSend: function() {
+					$('#save-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+				},
+				success: function(data) {
+					if(data.error) {
+						rMsg(data.msg, 'error');
+						$('#save-btn').prop('disabled', false).html('<i class="fa fa-save"></i> Save Gift Card Details');
+					} else {
+						rMsg(data.msg, 'success');
+						setTimeout(function(){
+							goTo('gift_cards');
+						}, 1500);
+					}
+				},
+				error: function() {
+					rMsg('An error occurred while saving', 'error');
+					$('#save-btn').prop('disabled', false).html('<i class="fa fa-save"></i> Save Gift Card Details');
+				}
 			});
-			
-			setTimeout(function(){
-				window.location.reload();
-			},1500);
-			
+
 			return false;
 		});
-		
+
 		$('#card_no, #amount')
 		.keyboard({
 			alwaysOpen: false,
@@ -242,7 +286,87 @@ $(document).ready(function(){
 			toggleMode : false,     
 			focusClass : 'hasFocus' 
 		});
-		
+	<?php elseif($use_js == 'addGiftCardJs'): ?>
+		$('#add-save-btn').click(function(e){
+			e.preventDefault();
+
+			var isValid = true;
+			var errorMsg = [];
+
+			$('.form-control').removeClass('error-border').css('border-color', '');
+
+			var cardNo = $('#card_no').val().trim();
+			var amount = $('#amount').val().trim();
+			var descId = $('#description_id').val().trim();
+			var brandId = $('#brand_id').val().trim();
+
+			if(cardNo == '' || cardNo == '0') {
+				errorMsg.push('Card Number is required');
+				$('#card_no').css('border-color', 'red');
+				isValid = false;
+			}
+			if(amount == '' || amount == '0' || parseFloat(amount) <= 0) {
+				errorMsg.push('Amount must be greater than 0');
+				$('#amount').css('border-color', 'red');
+				isValid = false;
+			}
+			if(descId == '' || descId == '0') {
+				errorMsg.push('Description Code is required');
+				$('#description_id').css('border-color', 'red');
+				isValid = false;
+			}
+			if(brandId == '' || brandId == '0') {
+				errorMsg.push('Brand is required');
+				$('#brand_id').css('border-color', 'red');
+				isValid = false;
+			}
+
+			if(!isValid) {
+				rMsg(errorMsg.join('<br>'), 'error');
+				return false;
+			}
+
+			$.ajax({
+				url: baseUrl + 'gift_cards/add_gift_card_db',
+				type: 'POST',
+				data: $('#add_gift_card_form').serialize(),
+				dataType: 'json',
+				beforeSend: function() {
+					$('#add-save-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+				},
+				success: function(data) {
+					$('#add-save-btn').prop('disabled', false).html('<i class="fa fa-save"></i> Save Gift Card');
+
+					if(data.error) {
+						rMsg(data.msg, 'error');
+					} else {
+						rMsg(data.msg, 'success');
+						setTimeout(function(){
+							goTo('gift_cards');
+						}, 1500);
+					}
+				},
+				error: function(xhr, status, error) {
+					console.log('Error:', error);
+					rMsg('An error occurred while saving', 'error');
+					$('#add-save-btn').prop('disabled', false).html('<i class="fa fa-save"></i> Save Gift Card');
+				}
+			});
+
+			return false;
+		});
+
+		$('#card_no, #amount')
+		.keyboard({
+			alwaysOpen: false,
+			usePreview: false,
+			autoAccept : true
+		})
+		.addNavigation({
+			position   : [0,0],     
+			toggleMode : false,     
+			focusClass : 'hasFocus' 
+		});
 	<?php elseif($use_js == 'giftCardsJs'): ?>
 		$('#new-gift-card-btn').click(function(){
 			// alert('New Customer Button');

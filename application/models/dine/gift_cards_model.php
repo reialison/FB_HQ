@@ -100,29 +100,59 @@ class Gift_cards_model extends CI_Model{
 		return $result;
 	}
 
-	public function get_last_gc_id($branch_code=null,$brand=null){
-		$this->db->trans_start();
-			$this->db->select('gc_id');
-			$this->db->from('gift_cards');
-			$this->db->order_by('gc_id desc');
-			$this->db->limit('1');
+	// public function get_last_gc_id($branch_code=null,$brand=null){
+	// 	$this->db->trans_start();
+	// 		$this->db->select('gc_id');
+	// 		$this->db->from('gift_cards');
+	// 		$this->db->order_by('gc_id desc');
+	// 		$this->db->limit('1');
 
-			if($branch_code != null){
-				$this->db->where('branch_code',$branch_code);
-			}
+	// 		if($branch_code != null){
+	// 			$this->db->where('branch_code',$branch_code);
+	// 		}
 
-			if($brand != null){
-				$this->db->where('brand_id',$brand);
-			}
+	// 		if($brand != null){
+	// 			$this->db->where('brand_id',$brand);
+	// 		}
 
-			$query = $this->db->get();
-			$result = $query->result();
-		$this->db->trans_complete();
-		if(isset($result[0])){
-			return $result[0]->menu_id;
-		}else{
+	// 		$query = $this->db->get();
+	// 		$result = $query->result();
+	// 	$this->db->trans_complete();
+	// 	if(isset($result[0])){
+	// 		return $result[0]->menu_id;
+	// 	}else{
+	// 		return 0;
+	// 	}
+	// }
+	public function get_last_gc_id($branch_code = null, $brand = null)
+	{
+		$this->db->select('gc_id');
+		$this->db->from('gift_cards');
+		$this->db->order_by('gc_id', 'DESC');
+		$this->db->limit(1);
+
+		if ($branch_code != null) {
+			$this->db->where('branch_code', $branch_code);
+		}
+
+		if ($brand != null) {
+			$this->db->where('brand_id', $brand);
+		}
+
+		$query = $this->db->get();
+		$result = $query->result();
+		
+		if (isset($result[0])) {
+			return $result[0]->gc_id;
+		} else {
 			return 0;
 		}
+	}
+
+	public function get_next_gc_id($branch_code)
+	{
+		$last_gc_id = $this->get_last_gc_id($branch_code, null);
+		return $last_gc_id + 1;
 	}
 
 	public function new_get_gift_card_brand($id=null,$notAll=false){
@@ -147,34 +177,32 @@ class Gift_cards_model extends CI_Model{
 		$this->db->trans_complete();
 		return $result;
 	}
-	public function new_get_gift_cards_rep_retail($sdate, $edate, $gc_type = "")
+	public function new_get_gift_cards_rep_retail($sdate, $edate, $gc_type = "", $terminal_id = "")
 	{
-		$this->db->select("ts.trans_ref as ref,ts.branch_code,tsm.amount,tsm.reference",false);
+		$this->db->select("ts.datetime, ts.trans_ref as ref, ts.branch_code, tsm.amount, tsm.reference, ts.pos_id", false);
 		$this->db->from("trans_sales_payments tsm");
 		$this->db->join("trans_sales ts", "ts.sales_id = tsm.sales_id && ts.pos_id = tsm.pos_id && ts.branch_code = tsm.branch_code");
-		// $this->db->join("(select * from gift_cards group by description_id,brand_id) gc", "gc.description_id = tsm.description_id",'left');
+		
+		if($terminal_id != '' && $terminal_id != null) {
+			$this->db->where("ts.pos_id", $terminal_id);
+		}
+		
 		// if($gc_type != "")
 		// {
-		// 	$this->db->where("tsm.card_no", $gc_type);					
+		//     $this->db->where("tsm.card_no", $gc_type);                    
 		// }
-		$this->db->where("ts.datetime >=", $sdate);		
+		
+		$this->db->where("ts.datetime >=", $sdate);        
 		$this->db->where("ts.datetime <", $edate);
 		$this->db->where("ts.type_id", 10);
 		$this->db->where("ts.trans_ref is not null");
- 		$this->db->where("ts.inactive", 0);
- 		$this->db->where("tsm.payment_type", 'gc');
- 		// if(HIDECHIT){
- 		// 	$this->db->where("ts.sales_id NOT IN (SELECT sales_id from trans_gc_payments where payment_type = 'chit')");
- 		// }
- 		// if(PRODUCT_TEST){
- 		// 	$this->db->where("ts.sales_id NOT IN (SELECT sales_id from trans_gc_payments where payment_type = 'producttest')");
- 		// }
-		// $this->db->group_by("tsm.description_id,ts.trans_ref");		
-		// $this->db->group_by("tsm.card_no");		
-		// $this->db->order_by("tsm.description_id ASC");
+		$this->db->where("ts.inactive", 0);
+		$this->db->where("tsm.payment_type", 'gc');
+		
+		$this->db->order_by("ts.datetime", "ASC");
+		
 		$q = $this->db->get();
 		$result = $q->result();
-		// echo $this->db->last_query();die();
 		return $result;
 	}
 }

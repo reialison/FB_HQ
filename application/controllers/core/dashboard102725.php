@@ -184,28 +184,30 @@ class Dashboard extends Prints {
         $data['load_js'] = 'dine/dashboard.php';
         $data['use_js'] = 'dashBoardJs';
         $data['add_js'] = array(
-            'js/plugins/morris/jquery-ui.min.js',
-            'js/plugins/morris/bootstrap.bundle.min.js', //
-            'js/plugins/morris/apexcharts.min.js',
-            'js/plugins/morris/morris.min.js',
-            'js/plugins/jqueryKnob/jquery.knob.js',
-            'js/plugins/sparkline/jquery.sparkline.min.js',
-            'assets/global/plugins/counterup/jquery.waypoints.min.js',
-            'assets/global/plugins/morris/morris.min.js',
-            'js/charts-echarts.min.js','js/echarts/echarts.js',
-            'js/charts-amcharts.min.js',
-            'assets/global/plugins/amcharts/amcharts/amcharts.js', 
-            'assets/global/plugins/amcharts/amcharts/pie.js', 
-            'assets/global/plugins/amcharts/amcharts/serial.js', 
-            'assets/global/plugins/jquery.blockui.min.js',
-            'js/plugins/morris/dataTables.min.js',
-            'js/plugins/morris/file-upload.js',
-            'js/plugins/morris/iconify-icon.min.js',
-            // 'js/plugins/morris/jquery-3.7.1.min.js',
-            // 'js/plugins/morris/jquery-jvectormap-2.0.5.min.js',
-            'js/plugins/morris/jquery-jvectormap-world-mill-en.js',
-            'js/plugins/morris/homeOneChart.js',
-            );
+        'js/plugins/morris/jquery-ui.min.js',
+        'js/plugins/morris/bootstrap.bundle.min.js',
+        'js/plugins/morris/apexcharts.min.js',
+        'js/plugins/morris/morris.min.js',
+        'js/plugins/jqueryKnob/jquery.knob.js',
+        'js/plugins/sparkline/jquery.sparkline.min.js',
+        'assets/global/plugins/counterup/jquery.waypoints.min.js',
+        'assets/global/plugins/morris/morris.min.js',
+        'js/charts-echarts.min.js','js/echarts/echarts.js',
+        'js/charts-amcharts.min.js',
+        'assets/global/plugins/amcharts/amcharts/amcharts.js', 
+        'assets/global/plugins/amcharts/amcharts/pie.js', 
+        'assets/global/plugins/amcharts/amcharts/serial.js', 
+        'assets/global/plugins/jquery.blockui.min.js',
+        'js/plugins/morris/dataTables.min.js',
+        'js/plugins/morris/file-upload.js',
+        'js/plugins/morris/iconify-icon.min.js',
+        // 'js/plugins/morris/jquery-3.7.1.min.js',
+        // 'js/plugins/morris/jquery-jvectormap-2.0.5.min.js',
+        'js/plugins/morris/jquery-jvectormap-world-mill-en.js',
+        'js/plugins/morris/homeOneChart.js',
+        
+        
+    );
         $data['page_no_padding'] = true;
         
         // $data['add_js'] = 'js/site_list_forms.js';
@@ -894,8 +896,8 @@ class Dashboard extends Prints {
         $todaySales = 0;
         $select = 'sum(total_amount) as today_sales';
         $args["trans_sales.trans_ref  IS NOT NULL"] = array('use'=>'where','val'=>null,'third'=>false);
-        $args["trans_sales.inactive"] = 0; 
-        $args["trans_sales.paid"] = 1; 
+        $args["trans_sales.inactive"] = 0;
+        $args["trans_sales.paid"] = 1;
         $args["trans_sales.type_id"] = SALES_TRANS;
         if($branch_code != ""){
         $args["trans_sales.branch_code"] = $branch_code;            

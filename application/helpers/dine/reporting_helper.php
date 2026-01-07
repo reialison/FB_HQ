@@ -77,8 +77,11 @@ function hourlyRep(){
 								$CI->make->branchesDrop('Branch','branch_id',null,'Select Branch');
 							$CI->make->eDivCol();
 
-							$CI->make->sDivCol(3);							
-								$CI->make->brandDrop('Brand','brand',null,'Select Brand');
+							// $CI->make->sDivCol(3);							
+							// 	$CI->make->brandDrop('Brand','brand',null,'Select Brand');
+							// $CI->make->eDivCol();
+							$CI->make->sDivCol(4);							
+								$CI->make->terminalDrop('Terminal','terminal_id',"",null,array('class'=>'','style'=>'position:initial'));
 							$CI->make->eDivCol();
 							// $CI->make->sDivCol(3);
 							// 	$CI->make->userDrop('User','user',null,null);
@@ -1284,6 +1287,9 @@ function newgcSalesRep($list = null,$gc_brands){
 							$CI->make->input('Date & Time Range','calendar_range',null,null,array('class'=>'rOkay daterangepicker','style'=>'position:initial;'),fa('fa-calendar'));
 							// $CI->make->date("Date","date",null,"Select Date",array("class"=>"rOkay"));
 						$CI->make->eDivCol();
+						$CI->make->sDivCol(4);							
+								$CI->make->terminalDrop('Terminal','terminal_id',"",null,array('class'=>'','style'=>'position:initial'));
+							$CI->make->eDivCol();
 						$CI->make->sDivCol(4);
 							$CI->make->button(fa('fa-refresh').' Generate',array('id'=>'gen-rep','style'=>'margin-top:24px;margin-right:10px;'),'primary');
 							// $CI->make->button(fa('fa-file-excel-o').' Export to Excel',array('id'=>'excel-btn','style'=>'margin-top:24px;'),'success');

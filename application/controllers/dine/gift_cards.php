@@ -15,9 +15,9 @@ class Gift_cards extends CI_Controller {
         // $menus = $this->menu_model->get_menus();
         $th = array('Card Number','Is Used?','');
         $data['code'] = create_rtable('gift','gc_id','gift-tbl',$th,'gift_cards/filter_gift_card',false,'list');
+  		$data['add_css'] = 'css/wowdash.css';
   		$data['load_js'] = 'dine/gift_cards.php';
         $data['use_js'] = 'listFormJs';
-        $data['add_css'] = 'css/wowdash.css';
         $data['page_no_padding'] = true;
         $data['sideBarHide'] = true;
         $this->load->view('page',$data);
@@ -53,7 +53,7 @@ class Gift_cards extends CI_Controller {
             foreach ($disc as $res) {
 		        // echo "<pre>",print_r($res),"</pre>";die();
                 
-                $link = $this->make->A(fa('fa-edit fa-lg').' Edit','#',array('class'=>'btn btn-outline-success-600 radius-8 px-20 py-11 align-items-center gap-2','id'=>'edit-'.$res->gc_id,'ref'=>$res->gc_id,'return'=>'true'));
+                $link = $this->make->A(fa('fa-edit fa-lg').' Edit','#',array('class'=>'btn blue btn-sm btn-outline edit','id'=>'edit-'.$res->gc_id,'ref'=>$res->gc_id,'return'=>'true'));
                 $json[$res->gc_id] = array(      
                     "card_no"=>$res->card_no,
                     "inactive_1"=>($res->inactive == 0 ? 'No' : 'Yes'),
@@ -86,6 +86,7 @@ class Gift_cards extends CI_Controller {
 		}
 
 		$data['code'] = gift_cards_form_container($gc_id);
+		$data['add_css'] = 'css/wowdash.css';
 		$data['load_js'] = "dine/gift_cards.php";
 		$data['use_js'] = "giftCardFormContainerJs";
 
@@ -105,29 +106,117 @@ class Gift_cards extends CI_Controller {
 		$this->load->view('load',$data);
 	}
 	public function gift_cards_details_db()
-	{
-		// if (!$this->input->post())
-			// header("Location:".base_url()."items");
+    {
+        $required_fields = array('card_no', 'amount', 'description_id', 'brand_id');
+        $errors = array();
+        
+        foreach ($required_fields as $field) {
+            if (empty($this->input->post($field))) {
+                $errors[] = ucwords(str_replace('_', ' ', $field)) . ' is required';
+            }
+        }
+        
+        if (!empty($errors)) {
+            echo json_encode(array('error' => true, 'msg' => implode(', ', $errors)));
+            return;
+        }
 
-		$items = array(
+        $items = array(
             'description_id' => $this->input->post('description_id'),
             'brand_id' => $this->input->post('brand_id'),
-			'card_no' => $this->input->post('card_no'),
-			'amount' => $this->input->post('amount'),
-			'inactive' => (int)$this->input->post('inactive'),
-		);
+            'card_no' => $this->input->post('card_no'),
+            'amount' => $this->input->post('amount'),
+            'inactive' => (int)$this->input->post('inactive'),
+        );
 
-		if ($this->input->post('gc_id')) {
-			$id = $this->input->post('gc_id');
-			$this->gift_cards_model->update_gift_cards($items,$id);
-			$msg = "Updated Gift Card";
-		} else {
-			$id = $this->gift_cards_model->add_gift_cards($items);
-			$msg = "Added New Gift Card";
-		}
+        if ($this->input->post('gc_id')) {
+            $id = $this->input->post('gc_id');
+            $this->gift_cards_model->update_gift_cards($items,$id);
+            $msg = "Updated Gift Card";
+        } else {
+            $id = $this->gift_cards_model->add_gift_cards($items);
+            $msg = "Added New Gift Card";
+        }
 
-		echo json_encode(array('id'=>$id,'msg'=>$msg));
-	}
+        echo json_encode(array('id'=>$id,'msg'=>$msg));
+    }
+
+    public function add_gift_card()
+    {
+        $data = $this->syter->spawn();
+        $data['page_title'] = fa('icon-present fa-fw')." Add New Gift Card";
+        $data['code'] = add_gift_card_form();
+        $data['add_css'] = 'css/wowdash.css';
+        $data['load_js'] = "dine/gift_cards.php";
+        $data['use_js'] = "addGiftCardJs";
+        $this->load->view('page',$data);
+    }
+
+    public function add_gift_card_load()
+    {
+        $data['code'] = add_gift_card_details_form();
+        $data['load_js'] = "dine/gift_cards.php";
+        $data['use_js'] = "addGiftCardJs";
+        $this->load->view('load',$data);
+    }
+
+    public function add_gift_card_db()
+    {
+
+        $this->load->model('site/site_model');
+
+        $required_fields = array('card_no', 'amount', 'description_id', 'brand_id');
+        $errors = array();
+
+        foreach ($required_fields as $field) {
+            $value = $this->input->post($field);
+            if (empty($value) || trim($value) == '') {
+                $errors[] = ucwords(str_replace('_', ' ', $field)) . ' is required';
+            }
+        }
+
+        if (!empty($errors)) {
+            echo json_encode(array('error' => true, 'msg' => implode(', ', $errors)));
+            return;
+        }
+
+        $branch_code = $this->session->userdata('branch_code');
+
+        if (empty($branch_code)) {
+            $branch = $this->site_model->get_tbl('branch_details', array(), array(), null, true, '*', null, '1');
+            if (!empty($branch)) {
+                $branch_code = $branch[0]->branch_code;
+            } else {
+                echo json_encode(array('error' => true, 'msg' => 'Branch code not found'));
+                return;
+            }
+        }
+
+        $next_gc_id = $this->gift_cards_model->get_next_gc_id($branch_code);
+
+        $now = date('Y-m-d H:i:s');
+
+        $items = array(
+            'gc_id' => $next_gc_id,
+            'description_id' => trim($this->input->post('description_id')),
+            'brand_id' => trim($this->input->post('brand_id')),
+            'card_no' => trim($this->input->post('card_no')),
+            'amount' => floatval($this->input->post('amount')),
+            'inactive' => (int)$this->input->post('inactive'),
+            'branch_code' => $branch_code,
+            'reg_date' => $now,
+            'update_date' => $now
+        );
+
+        $id = $this->gift_cards_model->add_gift_cards($items);
+
+        if ($id) {
+            $msg = "Added New Gift Card Successfully (GC ID: {$next_gc_id})";
+            echo json_encode(array('error' => false, 'id' => $id, 'gc_id' => $next_gc_id, 'msg' => $msg));
+        } else {
+            echo json_encode(array('error' => true, 'msg' => 'Failed to add gift card'));
+        }
+    }
 	#gift cards menu
     public function cashier_gift_cards(){
         $this->load->model('site/site_model');
@@ -240,7 +329,7 @@ class Gift_cards extends CI_Controller {
                         "amount"        => $sheet[$i]["B"],
                         "description"        => $sheet[$i]["C"],
                         "brand"        => $sheet[$i]["D"],
-                        // "branch_code"        => $sheet[$i]["E"],
+                        "branch_code"        => $sheet[$i]["E"],
                     );
                 }
             }

@@ -636,6 +636,7 @@ $(document).ready(function(){
 				calendar_range = $('#calendar_range').val();
 				user = $('#user').val();
 				terminal_id = $('#terminal_id').val();
+				// terminal_id = '';//$('#terminal_id').val();
 				branch_id = $('#branch_id').val();
 				json = 'false';
 				// alert(date+''+user);
@@ -781,7 +782,7 @@ $(document).ready(function(){
 				branch_id = $('#branch_id').val();
 				terminal_id = $('#terminal_id').val();
 				json = 'false';
-				var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&brand='+$("#terminal_id").val()+'&json='+json;
+				var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&terminal_id='+$("#terminal_id").val()+'&json='+json;
 				// formData = 'date='+date+'&user='+user+'&branch_id='+branch_id+'&json='+json;
 				$.post(this_url, formData, function(data){
 					console.log(data);
@@ -803,7 +804,7 @@ $(document).ready(function(){
 
 				//dr = $('#daterange').val();
 				// formData = 'date='+date+'&user='+user+'&branch_id='+branch_id+'&json='+json;
-				var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&brand='+$("#terminal_id").val()+'&json='+json;
+				var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&terminal_id='+$("#terminal_id").val()+'&json='+json;
 				$.post(this_url, formData, function(data){
 					console.log(data);
 					$('#print-div').print();
@@ -815,7 +816,7 @@ $(document).ready(function(){
 
 		$('#excel-btn').click(function(){
 			// var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&json='+json;
-			var formData = 'calendar_range='+$('#calendar_range').val()+'&user='+$("#user").val()+'&branch_id='+$("#branch_id").val()+'&brand='+$("#terminal_id").val(); 
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&user='+$("#user").val()+'&branch_id='+$("#branch_id").val()+'&terminal_id='+$("#terminal_id").val(); 
 			if($('#date').val() == ""){
 				rMsg('Enter Date Range','error');
 			}
@@ -1000,7 +1001,7 @@ $(document).ready(function(){
 			// var report_type = $("#report_type").val();
 			// var pdf = "sales_rep_excel";
 
-			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&terminal_id='+$("#terminal_id").val();
 			excel = "mgt_rep_gen_excel";
 			// 				+'&menu_cat_id='+$("#menu_cat_id").val();
 			// if(report_type == 1)
@@ -1037,7 +1038,7 @@ $(document).ready(function(){
 		// 	}
 		// });
 		$('#gen-rep').click(function(){
-			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&terminal_id='+$("#terminal_id").val();
 			if($('#calendar_range').val() == ""){
 				rMsg('Enter Date Range','error');
 			}
@@ -1095,7 +1096,7 @@ $(document).ready(function(){
 			// var report_type = $("#report_type").val();
 			// var pdf = "sales_rep_gen";
 
-			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&terminal_id='+$("#terminal_id").val();
 			// if(report_type == 1)
 			// {
 			// 	pdf = "sales_rep_pdf";

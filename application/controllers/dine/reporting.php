@@ -1008,6 +1008,7 @@ class Reporting extends Prints {
 
         $date = $this->input->post('calendar_range');
         $branch_id = $this->input->post('branch_id');
+        $terminal_id = $this->input->post('terminal_id');
         $brand = $this->input->post('brand');
         // $user = $this->input->post('user');
         $json = $this->input->post('json');
@@ -1037,6 +1038,10 @@ class Reporting extends Prints {
         $args = array();
         $args["trans_date  >= '".$from."' AND trans_date <= '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
         $args['branch_code'] = $branch_id;       
+
+        if($terminal_id != ''){
+            $args['pos_id'] = $terminal_id;
+        }
 
         // if($terminal_id != '' && is_int($terminal_id)){
         //     $args['pos_id'] = $terminal_id;
@@ -18843,7 +18848,7 @@ class Reporting extends Prints {
         // $menu_cat_id = $this->input->post("menu_cat_id"); 
         $terminal_id = null;
         // if(CONSOLIDATOR){
-        //     $terminal_id = $this->input->post("terminal_id");
+            $terminal_id = $this->input->post("terminal_id");
         // }       
         // $brand = $this->input->post("brand"); 
         $daterange = $this->input->post("calendar_range");        
@@ -20237,8 +20242,10 @@ class Reporting extends Prints {
         start_load(0);
         $gc_type = $this->input->post("gc_type");        
         // $brand = $this->input->post("brand");        
-        $daterange = $this->input->post("calendar_range");        
+        $daterange = $this->input->post("calendar_range"); 
+        $terminal_id = $this->input->post("terminal_id");
         $dates = explode(" to ",$daterange);
+        
         // $from = date2SqlDateTime($dates[0]);
         // $to = date2SqlDateTime($dates[1]);
         // $date = $this->input->post("date");
@@ -20246,7 +20253,7 @@ class Reporting extends Prints {
         
         $from = date2SqlDateTime($dates[0]. " ".$set->store_open);        
         $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
-        $trans_ret = $this->gift_cards_model->new_get_gift_cards_rep_retail($from, $to, $gc_type);  
+        $trans_ret = $this->gift_cards_model->new_get_gift_cards_rep_retail($from, $to, $gc_type, $terminal_id);  
         // echo $this->db->last_query();              
         // echo "<pre>", print_r($trans_ret), "</pre>"; die();
         $trans_count_ret = count($trans_ret);
@@ -20263,12 +20270,12 @@ class Reporting extends Prints {
                         // $this->make->th('GC To');
                         // $this->make->th('QTY');
                         // $this->make->th('Amount');
-                        // $this->make->th('Total');
+                        $this->make->th('Datetime');
                         $this->make->th('Trans Ref');
                         $this->make->th('Card Number');
                         $this->make->th('Branch Code');
                         $this->make->th('Amount');
-                        // $this->make->th('Total');
+                        $this->make->th('POS ID');
                     $this->make->eRow();
                 $this->make->eTableHead();
                 $this->make->sTableBody();
@@ -20285,6 +20292,7 @@ class Reporting extends Prints {
                         // $tot_gross += $res->gross;
 
                         $this->make->sRow();
+                            $this->make->td($res->datetime);
                             $this->make->td($res->ref);
                             $this->make->td($res->reference);
                             // $this->make->td($res->brand_id);
@@ -20294,7 +20302,7 @@ class Reporting extends Prints {
                             $this->make->td($res->branch_code); 
                             $this->make->td(num($res->amount), array("style"=>"text-align:right"));                                                         
                             // $this->make->td(num($res->price), array("style"=>"text-align:right"));
-                            // $this->make->td(num($res->gross), array("style"=>"text-align:right"));
+                            $this->make->td($res->pos_id, array("style"=>"text-align:right"));
                         $this->make->eRow();
 
                          // Grand Total
@@ -20348,7 +20356,8 @@ class Reporting extends Prints {
         sleep(1);
         
         $gc_type = $_GET['gc_type'];        
-        $daterange = $_GET['calendar_range'];        
+        $daterange = $_GET['calendar_range'];
+        $terminal_id = $_GET['terminal_id'];           
         $dates = explode(" to ",$daterange);
         // $from = date2SqlDateTime($dates[0]);
         // $to = date2SqlDateTime($dates[1]);
@@ -20428,12 +20437,13 @@ class Reporting extends Prints {
         );
         
         // $headers = array('Acknowledgement Receipt #', 'GC Type','GC Description','GC From','GC To','Qty','Amount','Total');
-        $headers = array('Trans Ref','Card Number','Branch Code', 'Amount');
+        $headers = array('Datetime','Trans Ref','Card Number','Branch Code', 'Amount', 'Pos ID');
         $sheet->getColumnDimension('A')->setWidth(20);
         $sheet->getColumnDimension('B')->setWidth(20);
         $sheet->getColumnDimension('C')->setWidth(20);
         $sheet->getColumnDimension('D')->setWidth(20);
         $sheet->getColumnDimension('E')->setWidth(20);
+        $sheet->getColumnDimension('F')->setWidth(20);
 
         $sheet->mergeCells('A'.$rc.':E'.$rc);
         // $sheet->getCell('A'.$rc)->setValue($set->branch_name);
@@ -20512,15 +20522,19 @@ class Reporting extends Prints {
 
             foreach ($trans_ret as $k => $v) {
                 // $tot_gross_ret += $v->gross; 
-                $sheet->getCell('A'.$rc)->setValue($v->ref.' ');
+                $sheet->getCell('A'.$rc)->setValue($v->datetime);
                 $sheet->getStyle('A'.$rc)->applyFromArray($styleTxt);
-                $sheet->getCell('B'.$rc)->setValue($v->reference);
+                $sheet->getCell('B'.$rc)->setValue($v->ref.' ');
                 $sheet->getStyle('B'.$rc)->applyFromArray($styleTxt);
-                $sheet->getCell('C'.$rc)->setValue($v->branch_code);
+                $sheet->getCell('C'.$rc)->setValue($v->reference);
                 $sheet->getStyle('C'.$rc)->applyFromArray($styleTxt);
-
-                $sheet->getCell('D'.$rc)->setValue($v->amount);
+                $sheet->getCell('D'.$rc)->setValue($v->branch_code);
                 $sheet->getStyle('D'.$rc)->applyFromArray($styleTxt);
+
+                $sheet->getCell('E'.$rc)->setValue($v->amount);
+                $sheet->getStyle('E'.$rc)->applyFromArray($styleTxt);
+                $sheet->getCell('F'.$rc)->setValue($v->pos_id);
+                $sheet->getStyle('F'.$rc)->applyFromArray($styleTxt);
                 // $sheet->getCell('C'.$rc)->setValue($v->description_id);
                 // $sheet->getStyle('C'.$rc)->applyFromArray($styleTxt);
 
@@ -20650,7 +20664,8 @@ class Reporting extends Prints {
         $pdf->AddPage();
          
          $gc_type = $_GET['gc_type'];     
-        $daterange = $_GET['calendar_range'];        
+        $daterange = $_GET['calendar_range'];  
+        $terminal_id = $_GET['terminal_id'];        
         $dates = explode(" to ",$daterange);
         // $from = date2SqlDateTime($dates[0]);
         // $to = date2SqlDateTime($dates[1]);
@@ -20683,10 +20698,12 @@ class Reporting extends Prints {
 
         // -----------------------------------------------------------------------------
         $pdf->SetLineStyle(array('width' => 0.5, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => 'black'));
+        $pdf->Cell(50, 0, 'Datetime', 'B', 0, 'L');  
         $pdf->Cell(50, 0, 'Trans Ref', 'B', 0, 'L');  
         $pdf->Cell(50, 0, 'Card Number', 'B', 0, 'L');
-        $pdf->Cell(100, 0, 'Branch Code', 'B', 0, 'L');  
-        $pdf->Cell(68, 0, 'Amount', 'B', 0, 'L');      
+        $pdf->Cell(50, 0, 'Branch Code', 'B', 0, 'L');  
+        $pdf->Cell(50, 0, 'Amount', 'B', 0, 'L');   
+        $pdf->Cell(50, 0, 'POS ID', 'B', 0, 'L');   
         // $pdf->Cell(32, 0, 'GC Description', 'B', 0, 'L');
         // $pdf->Cell(32, 0, 'GC From', 'B', 0, 'L');
         // $pdf->Cell(32, 0, 'GC To', 'B', 0, 'L');        
@@ -20734,10 +20751,12 @@ class Reporting extends Prints {
            
             foreach ($trans_ret as $k => $v) {
                 // $tot_gross_ret += $v->gross;
+                $pdf->Cell(50, 0, $v->datetime, 0, 'L');
                 $pdf->Cell(50, 0, $v->ref, '', 0, 'L');
                 $pdf->Cell(50, 0, $v->reference, '', 0, 'L');
-                $pdf->Cell(100, 0, $v->branch_code, '', 0, 'L');
-                $pdf->Cell(80, 0, $v->amount, '', 0, 'L');         
+                $pdf->Cell(50, 0, $v->branch_code, '', 0, 'L');
+                $pdf->Cell(50, 0, $v->amount, '', 0, 'L');
+                $pdf->Cell(50, 0, $v->pos_id, '', 0, 'L');         
                 // $pdf->Cell(32, 0, $v->description_id, '', 0, 'L');
                 // $pdf->Cell(32, 0, $v->gc_from, '', 0, 'L');
                 // $pdf->Cell(32, 0, $v->gc_to, '', 0, 'L');        

@@ -57,7 +57,7 @@ class Admin extends CI_Controller {
         }
         echo json_encode(array("id"=>$id,"desc"=>$role,"act"=>$act,'msg'=>$msg));
     }
-    public function restart_down(){
+    public function restart(){
         $this->load->helper('core/admin_helper');
         $data = $this->syter->spawn('restart');
         $data['page_title'] = fa('fa-refresh')." Restart POS";
@@ -66,7 +66,7 @@ class Admin extends CI_Controller {
         $data['use_js'] = 'restartJs';
         $this->load->view('page',$data);
     }
-    public function go_restart_down(){
+    public function go_restart(){
         $this->load->model('core/admin_model');
         $this->admin_model->restart();
         // $this->db = $this->load->database('main', TRUE);

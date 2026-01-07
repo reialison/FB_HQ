@@ -83,18 +83,20 @@ function gift_cards_details_form($det, $gc_id)
 
 		$CI->make->sDivRow(array('style'=>'margin:10px;'));
 			$CI->make->sDivCol(12);
-				// $CI->make->hidden('tax_id',iSetObj($det,'tax_id'));
 				$CI->make->input('Description Code','description_id',iSetObj($det,'description_id'),'Type Description Code',array('class'=>'rOkay'));
 				$CI->make->input('Brand','brand_id',iSetObj($det,'brand_id'),'Type Brand',array('class'=>'rOkay'));
 				$CI->make->input('Card Number','card_no',iSetObj($det,'card_no'),'Type Gift Card Code',array('class'=>'rOkay'));
-				// $CI->make->input('Amount','amount',iSetObj($det,'amount'),'Type Amount',array('disabled'=>'disabled'));
-				$CI->make->input('Amount','amount',iSetObj($det,'amount'),'Type Amount',array('readonly'=>'readonly'));
+				
+				// if (!empty($gc_id)) {
+					$CI->make->input('Amount','amount',iSetObj($det,'amount'),'Type Amount',array('readonly'=>'readonly', 'class'=>'rOkay'));
+				// }else{
+					// $CI->make->input('Amount','amount',iSetObj($det,'amount'),'Type Amount',array('class'=>'rOkay'));
+				// }
 				$CI->make->inactiveDrop('Is Used?','inactive',iSetObj($det,'inactive'),array('style'=>'width: 85px;'));
 			$CI->make->eDivCol();
 		$CI->make->eDivRow();
 		
-		// $CI->make->append('<br/>');
-		
+		// Add Save button for both add and edit
 		$CI->make->sDivRow(array('style'=>'margin:10px;'));
 			$CI->make->sDivCol(4);
 			$CI->make->eDivCol();
@@ -103,7 +105,7 @@ function gift_cards_details_form($det, $gc_id)
 			$CI->make->eDivCol();
 			$CI->make->sDivCol(4);
 			$CI->make->eDivCol();
-	    $CI->make->eDivRow();
+		$CI->make->eDivRow();
 	$CI->make->eForm();
 
 	return $CI->make->code();
@@ -234,5 +236,55 @@ function giftFilterForm(){
 			$CI->make->eDivCol();
     	$CI->make->eDivRow();
 	$CI->make->eForm();
+	return $CI->make->code();
+}
+function add_gift_card_form()
+{
+	$CI =& get_instance();
+
+	$CI->make->sDivRow();
+		$CI->make->sDivCol(12);
+			$CI->make->sBox('primary');
+				$CI->make->sBoxHead();
+					$CI->make->append($CI->make->a(fa('fa-reply')." Back To List",base_url().'gift_cards',array('class'=>'btn btn-success-600 radius-8 px-16 py-9 pull-right','return'=>true)));
+					// $CI->make->H(3, fa('icon-present').' Add New Gift Card', array('class'=>'box-title'));
+				$CI->make->eBoxHead();
+				$CI->make->sBoxBody();
+					$CI->make->append(add_gift_card_details_form());
+				$CI->make->eBoxBody();
+			$CI->make->eBox();
+		$CI->make->eDivCol();
+	$CI->make->eDivRow();
+
+	return $CI->make->code();
+}
+
+function add_gift_card_details_form()
+{
+	$CI =& get_instance();
+
+	$CI->make->sForm("gift_cards/add_gift_card_db",array('id'=>'add_gift_card_form'));
+		$CI->make->sDivRow(array('style'=>'margin:10px;'));
+			$CI->make->sDivCol(12);
+				$CI->make->input('Description Code<span class="required">*</span>','description_id','','Type Description Code',array('class'=>'rOkay'));
+				$CI->make->input('Brand<span class="required">*</span>','brand_id','','Type Brand',array('class'=>'rOkay'));
+				$CI->make->input('Card Number<span class="required">*</span>','card_no','','Type Gift Card Code',array('class'=>'rOkay'));
+				$CI->make->input('Amount<span class="required">*</span>','amount','','Type Amount',array('class'=>'rOkay', 'type'=>'number', 'step'=>'0.01', 'min'=>'0'));
+
+				$CI->make->inactiveDrop('Is Used?','inactive',0,array('style'=>'width: 85px;'));
+			$CI->make->eDivCol();
+		$CI->make->eDivRow();
+
+		$CI->make->sDivRow(array('style'=>'margin:10px;'));
+			$CI->make->sDivCol(4);
+			$CI->make->eDivCol();
+			$CI->make->sDivCol(4, 'center');
+				$CI->make->button(fa('fa-save').' Save Gift Card',array('id'=>'add-save-btn','class'=>'btn-block'),'success');
+			$CI->make->eDivCol();
+			$CI->make->sDivCol(4);
+			$CI->make->eDivCol();
+		$CI->make->eDivRow();
+	$CI->make->eForm();
+
 	return $CI->make->code();
 }

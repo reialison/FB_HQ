@@ -179,6 +179,7 @@ $(document).ready(function(){
 			date = $('#calendar_range').val();
 			branch_id = $('#branch_id').val();
 			brand = $('#brand').val();
+			terminal_id = $('#terminal_id').val();
 			// user = $('#user').val();
 			json = 'false';
 			// alert(date+''+user);
@@ -187,7 +188,7 @@ $(document).ready(function(){
 				$('#print-div').html('<center><div style="padding-top:20px"><i class="fa fa-spinner fa-2x fa-fw fa-spin aw"></i></div></center>');
 				var this_url = baseUrl+'reporting/check_hourly_sales';
 				//dr = $('#daterange').val();
-				formData = 'calendar_range='+date+'&branch_id='+branch_id+'&brand='+brand+'&json='+json;
+				formData = 'calendar_range='+date+'&branch_id='+branch_id+'&brand='+brand+'&terminal_id='+terminal_id+'&json='+json;
 				$.post(this_url, formData, function(data){
 					// alert(data);
 					$('#print-div').html(data.code);
@@ -221,7 +222,7 @@ $(document).ready(function(){
 			branch_id = $('#branch_id').val();
 			brand = $('#brand').val();
 
-			var formData = formData = 'calendar_range='+date+'&branch_id='+branch_id+'&brand='+brand;
+			var formData = formData = 'calendar_range='+date+'&branch_id='+branch_id+'&brand='+brand+'&terminal_id='+terminal_id;
 			if($('#calendar_range').val() == ""){
 				rMsg('Enter Date Range','error');
 			}
@@ -3083,7 +3084,7 @@ $(document).ready(function(){
 			var report_type = $("#report_type").val();
 			// var pdf = "bad_order_report_excel";
 
-			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&terminal_id='+$("#terminal_id").val();
 			// if(report_type == 1)
 			// {
 				excel = "bad_order_report_excel";
@@ -3110,7 +3111,7 @@ $(document).ready(function(){
 			}
 		});
 		$('#gen-rep').click(function(){
-			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&terminal_id='+$("#terminal_id").val();
 			if($('#calendar_range').val() == ""){
 				rMsg('Enter Date Range','error');
 			}
@@ -3156,7 +3157,7 @@ $(document).ready(function(){
 			var report_type = $("#report_type").val();
 			var pdf = "bad_order_report_gen_pdf";
 
-			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&terminal_id='+$("#terminal_id").val();
 			
 			if($('#calendar_range').val() == ""){
 				rMsg('Enter Date Range','error');
@@ -3173,7 +3174,7 @@ $(document).ready(function(){
 			var report_type = $("#report_type").val();
 			var pdf = "bad_order_report_receipt_pdf";
 
-			var formData = 'calendar='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val();
+			var formData = 'calendar='+$('#calendar_range').val()+'&branch_id='+$("#branch_id").val()+'&terminal_id='+$("#terminal_id").val();
 			
 			if($('#calendar_range').val() == ""){
 				rMsg('Enter Date Range','error');
@@ -3436,7 +3437,7 @@ $(document).ready(function(){
 			var report_type = $("#report_type").val();
 			var excel = "new_gc_rep_excel";
 
-			var formData = 'calendar_range='+$('#calendar_range').val()+'&gc_type='+$('#gc-type').val();
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&gc_type='+$('#gc-type').val()+'&terminal_id='+$('#terminal_id').val();
 			
 			// var formData = 'calendar_range='+$('#calendar_range').val();
 			if($('#calendar_range').val() == ""){
@@ -3457,7 +3458,7 @@ $(document).ready(function(){
 			}
 		});
 		$('#gen-rep').click(function(){
-			var formData = 'calendar_range='+$('#calendar_range').val()+'&gc_type='+$('#gc-type').val();
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&gc_type='+$('#gc-type').val()+'&terminal_id='+$('#terminal_id').val();
 			if($('#calendar_range').val() == ""){
 				rMsg('Enter Date Range','error');
 			}
@@ -3500,7 +3501,7 @@ $(document).ready(function(){
 			var report_type = $("#report_type").val();
 			var pdf = "new_gc_rep_pdf";
 
-			var formData = 'calendar_range='+$('#calendar_range').val()+'&gc_type='+$('#gc-type').val();
+			var formData = 'calendar_range='+$('#calendar_range').val()+'&gc_type='+$('#gc-type').val()+'&terminal_id='+$('#terminal_id').val();
 			
 			
 			if($('#calendar_range').val() == ""){

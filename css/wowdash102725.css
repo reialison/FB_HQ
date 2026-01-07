@@ -1317,7 +1317,9 @@ span {
 
 
 /*.tab-content>.tab-pane{display:none!important}*/
-
+.fade {
+    /*display:none;*/
+}
 .show {
     display:block!important;
     opacity: 100;
@@ -1460,13 +1462,3 @@ body {
     cursor: default;
 }
 /*END*/
-.table  th{
-    display: table-cell ! Important;
-}
-.table  td{
-    display: table-cell ! Important;
-}
-.page-header.navbar .menu-toggler {
-    background-color: white!important;
-    background-size: 29px!important;
-}

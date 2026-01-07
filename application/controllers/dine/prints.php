@@ -1856,6 +1856,13 @@ class Prints extends CI_Controller {
             if($set_brand != null )
                 $brand = $set_brand;
 
+            if($this->input->post('terminal_id') != ''){
+                $terminal = $this->input->post('terminal_id');
+            }else if($this->input->get('terminal_id') != ''){
+                $terminal = $this->input->get('terminal_id');
+            }else{
+                $terminal = 'CONSOLIDATOR';
+            }
             // $range = '2015/10/28 7:00 AM to 2015/10/28 10:00 PM';
             // $calendar = '12/04/2015';
             $title = "";
@@ -1960,7 +1967,7 @@ class Prints extends CI_Controller {
                 $to = date('Y-m-d', strtotime(sql2Date($to) . ' +1 day')).' '.$branch_details[0]->store_close;
             }
 
-            $terminal = TERMINAL_ID;
+            
             // $args['trans_sales.terminal_id'] = $terminal;
             return array('args'=>$args,'from'=>$from,'to'=>$to,'date'=>$date,'terminal'=>$terminal,"employee"=>$emp,"title"=>$title,"shift_id"=>$shift,'branch_code'=>$branch_code,'brand'=>$brand);
         }
@@ -8437,7 +8444,8 @@ class Prints extends CI_Controller {
         $set = $setup[0];
         start_load(0);
         $disc_id = $this->input->post("disc_id");        
-        $daterange = $this->input->post("calendar_range");        
+        $daterange = $this->input->post("calendar_range"); 
+        $terminal_id = $this->input->post("terminal_id");           
         $dates = explode(" to ",$daterange);
         
         // if(CONSOLIDATOR){
@@ -8448,7 +8456,8 @@ class Prints extends CI_Controller {
         $from = date2SqlDateTime($dates[0]);        
         $to = date2SqlDateTime(date('Y-m-d', strtotime($dates[1] . ' +1 day')). " ".$set->store_open);
 
-        $terminal_id = null;
+        // $terminal_id = null;
+        
         // if(CONSOLIDATOR){
         //     $this->cashier_model->db = $this->load->database('main', TRUE);
         //     $terminal_id = $this->input->post("terminal_id");
@@ -8464,6 +8473,9 @@ class Prints extends CI_Controller {
         if($disc_id){
             $args["trans_sales_discounts.disc_id"] =$disc_id;
         }
+        if($terminal_id != ''){
+            $args['trans_sales.pos_id'] = $terminal_id;
+        }
         // $args["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
 
         // if(CONSOLIDATOR){
@@ -8477,7 +8489,7 @@ class Prints extends CI_Controller {
         $args_date["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
 
         $trans = $this->cashier_model->get_trans_sales_discounts_backoffice(null, $args);  
-        echo $this->cashier_model->db->last_query(); die();
+        // echo $this->cashier_model->db->last_query(); die();
         // $trans = $this->menu_model->get_voided_cat_sales_rep($from, $to, $menu_cat_id);  
         // $trans_ret = $this->menu_model->get_voided_cat_sales_rep_retail($from, $to, "");  
         
@@ -10803,7 +10815,25 @@ class Prints extends CI_Controller {
                 $title_name = $post['title'];
 
             $print_str .= align_center($title_name,PAPER_WIDTH," ")."\r\n";
+
+            
             $print_str .= align_center("TERMINAL ".$post['terminal'],PAPER_WIDTH," ")."\r\n";
+
+            $branch_details = $this->setup_model->get_branch_details();
+
+            if(is_numeric($post['terminal'])){
+                $terminal = $this->db->get_where('terminals',array('branch_code'=>$post['branch_code'],'terminal_id'=>$post['terminal']))->result();
+
+                $print_str .= align_center("TIN: ".$branch_details[0]->tin,PAPER_WIDTH," ")."\r\n";
+                $print_str .= align_center("ACCRDN: ".$branch_details[0]->accrdn,PAPER_WIDTH," ")."\r\n";
+                $print_str .= align_center("MIN: ".$terminal[0]->machine_no,PAPER_WIDTH," ")."\r\n";
+                $print_str .= align_center("PERMIT: ".$terminal[0]->permit,PAPER_WIDTH," ")."\r\n";
+            }else{
+                $print_str .= align_center("TIN: ".$branch_details[0]->tin,PAPER_WIDTH," ")."\r\n";
+                $print_str .= align_center("ACCRDN: ".$branch_details[0]->accrdn,PAPER_WIDTH," ")."\r\n";
+                // $print_str .= align_center("PERMIT: ".$branch_details[0]->permit_no,PAPER_WIDTH," ")."\r\n";
+            }
+
             $print_str .= append_chars('Printed On','right',11," ").append_chars(": ".date2SqlDateTime($time),'right',19," ")."\r\n";
             $print_str .= append_chars('Printed BY','right',11," ").append_chars(": ".$user['full_name'],'right',19," ")."\r\n";
             $print_str .= PAPER_LINE."\r\n";
@@ -11166,21 +11196,21 @@ class Prints extends CI_Controller {
                 // $print_str .= "\r\n";
                 // $print_str .= "\r\n";    
             #FOOTER
-                // $print_str .= append_chars(substrwords('Invoice Start: ',18,""),"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
-                //              .append_chars($zread->invoice_start,"left",PAPER_RD_COL_3_3," ")."\r\n";
-                // $print_str .= append_chars(substrwords('Invoice End: ',18,""),"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
-                //              .append_chars($zread->invoice_end,"left",PAPER_RD_COL_3_3," ")."\r\n";
-                // $print_str .= append_chars(substrwords('Invoice Ctr: ',18,""),"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
-                //              .append_chars($zread->invoice_count,"left",PAPER_RD_COL_3_3," ")."\r\n";
-                // if($title_name == "ZREAD"){
-                //     $print_str .= "\r\n";
-                //     $print_str .= append_chars(substrwords('OLD GT: ',18,""),"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
-                //                  .append_chars(numInt($zread->old_gt),"left",PAPER_RD_COL_3_3," ")."\r\n";
-                //     $print_str .= append_chars(substrwords('NEW GT: ',18,""),"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
-                //                  .append_chars( numInt($zread->new_gt)  ,"left",PAPER_RD_COL_3_3," ")."\r\n";
-                //     $print_str .= append_chars(substrwords('Z READ CTR: ',18,""),"right",PAPER_RD_COL_1," ").align_center('',PAPER_RD_COL_2," ")
-                //                  .append_chars($zread->zread_ctr ,"left",PAPER_RD_COL_3_3," ")."\r\n";
-                // }
+                $print_str .= append_chars(substrwords('Invoice Start: ',18,""),"right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                             .append_chars($zread->invoice_start,"left",PAPER_R3_COL3," ")."\r\n";
+                $print_str .= append_chars(substrwords('Invoice End: ',18,""),"right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                             .append_chars($zread->invoice_end,"left",PAPER_R3_COL3," ")."\r\n";
+                $print_str .= append_chars(substrwords('Invoice Ctr: ',18,""),"right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                             .append_chars($zread->invoice_count,"left",PAPER_R3_COL3," ")."\r\n";
+                if($title_name == "ZREAD"){
+                    $print_str .= "\r\n";
+                    $print_str .= append_chars(substrwords('OLD GT: ',18,""),"right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                                 .append_chars(numInt($zread->old_gt),"left",PAPER_R3_COL3," ")."\r\n";
+                    $print_str .= append_chars(substrwords('NEW GT: ',18,""),"right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                                 .append_chars( numInt($zread->new_gt)  ,"left",PAPER_R3_COL3," ")."\r\n";
+                    $print_str .= append_chars(substrwords('Z READ CTR: ',18,""),"right",PAPER_R3_COL1," ").align_center('',PAPER_R3_COL2," ")
+                                 .append_chars($zread->zread_ctr ,"left",PAPER_R3_COL3," ")."\r\n";
+                }
                 $print_str .= PAPER_LINE."\r\n";
             #MALLS
                 if(MALL_ENABLED){
@@ -13832,7 +13862,7 @@ class Prints extends CI_Controller {
         $args["trans_date  >= '".$from."' AND trans_date <= '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
         $args['branch_code'] = $branch_code;       
 
-        if($terminal_id != '' && is_int($terminal_id)){
+        if($terminal_id != ''){
             $args['pos_id'] = $terminal_id;
         }
 
@@ -14962,7 +14992,7 @@ class Prints extends CI_Controller {
         $args["trans_date  >= '".$from."' AND trans_date <= '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
         $args['branch_code'] = $branch_code;       
 
-        if($terminal_id != '' && is_int($terminal_id)){
+        if($terminal_id != ''){
             $args['pos_id'] = $terminal_id;
         }
         
@@ -18954,11 +18984,13 @@ class Prints extends CI_Controller {
         $dates = explode(" to ",$daterange);
         $from = date2SqlDateTime($dates[0]);        
         $to = date2SqlDateTime($dates[1]);  
+        $terminal_id = $this->input->post('terminal_id');
 
         // $terminal_id = null;
         // if(CONSOLIDATOR){
         //     $terminal_id = $this->input->post("terminal_id");
-        // }     
+        // }    
+        
             $branch_code = $this->input->post("branch_id");
 
         // $this->cashier_model->db = $this->load->database('main', TRUE);
@@ -18970,7 +19002,9 @@ class Prints extends CI_Controller {
         $args["trans_sales.type"] = 'mgtfree';
         // $args["trans_sales.type = '".MGTPROMO."'"] = array('use'=>'where','val'=>null,'third'=>false);
         // $args["trans_sales.datetime between '".$from."' and '".$to."'"] = array('use'=>'where','val'=>null,'third'=>false);
-
+        if($terminal_id != ''){
+            $args['trans_sales.pos_id'] = $terminal_id;
+        } 
         // if(CONSOLIDATOR){
         //     if($terminal_id != null){
         //         $args['trans_sales.terminal_id'] = $terminal_id;
